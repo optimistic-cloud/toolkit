@@ -5,8 +5,9 @@ FROM alpine:3
 ARG USER_NAME="toolkit"
 ARG USER_ID="1010"
 
+WORKDIR /app
 
-COPY scripts/*.sh /app/
+COPY Justfile ./Justfile
 
 RUN apk add --no-cache just bash curl sqlite tzdata \
   && addgroup -g "${USER_ID}" "${USER_NAME}" \
