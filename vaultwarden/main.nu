@@ -1,6 +1,6 @@
 use std/log
 
-def backup_db_sqlite[] {
+def backup_db_sqlite [] {
     print "🔧 Vaultwarden Backup Tool backup sqlite"
 }
 
