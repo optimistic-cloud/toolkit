@@ -22,6 +22,9 @@ backup:
     
     sqlite3 "/vaultwarden/data/db.sqlite3" ".backup '/vaultwarden/data/db-export.sqlite3'"
     
+		tar -cf - /path/to/your/data | zstd -3q --rsyncable | restic backup --stdin --stdin-filename data.tar.zst -r /path/to/restic/repo
+
+
     restic backup /vaultwarden/data --host "${HOSTNAME:-localhost}" --tag "${restic_tags:-vaultwarden}" --quiet
     restic forget --keep-within 180d --prune --quiet
     restic check --read-data-subset 100% --quiet
