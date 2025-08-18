@@ -1,5 +1,5 @@
 # toolkit
 
 ```
-docker run --rm --pull=always ghcr.io/optimistic-cloud/toolkit:toolkit version
+docker run --rm --pull=always ghcr.io/optimistic-cloud/toolkit version
 ```

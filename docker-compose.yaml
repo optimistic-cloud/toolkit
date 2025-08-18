@@ -1,0 +1,8 @@
+services:
+
+  backup:
+    image: ghcr.io/optimistic-cloud/toolkit:latest
+    command: vaultwarden backup
+    restart: never
+    volumes:
+      - vaultwarden-data:/vaultwarden/data/
