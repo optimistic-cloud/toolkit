@@ -4,11 +4,11 @@ def backup_db_sqlite [database: path] {
     print $"🔧 Vaultwarden Backup Tool backup sqlite on ($database)"
 }
 
-def "main restore" [--restore-id: number --restore-path: path] {
+def "main restore" [--restore-id: number --restore-dir: path] {
     print $"🔧 Vaultwarden Backup Tool main restore ($restore_id)"
 }
 
-def main [--backup-data: path] {
+def main [--backup-data: path --restic-cache-dir: path] {
     print "🔧 Vaultwarden Backup Tool"
 
     if not ($backup_data | path exists) {
