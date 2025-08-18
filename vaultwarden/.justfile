@@ -16,5 +16,4 @@ backup:
 restore snapshot_id:
     nu main.nu restore \
         --snapshot-id {{snapshot_id}} \
-        --restore-dir {{restore_dir}} \
-        --restic-cache-dir {{restic_cache_dir}}
+        --restore-dir {{restore_dir}}

@@ -5,7 +5,7 @@ def backup_db_sqlite [database: path] {
 }
 
 def "main restore" [--snapshot-id: number --restore-dir: path] {
-    log info $"🔧 Vaultwarden Backup Tool main restore ($restore_id)"
+    log info $"🔧 Vaultwarden Backup Tool main restore ($snapshot_id)"
 }
 
 def main [--backup-data: path --restic-cache-dir: path] {
