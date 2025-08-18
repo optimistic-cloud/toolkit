@@ -115,6 +115,6 @@ def main [--backup-data: path --restic-cache-dir: path] {
         log error $"❌ Backup failed: ($backup_result.error)"
         error make {msg: $"Backup operation failed: ($backup_result.error)"}
     }
-    
+
     log info "🎉 Backup tool execution completed"
 }
