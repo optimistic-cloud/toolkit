@@ -1,4 +1,4 @@
-mod 'vaultwarden'
+mod vaultwarden
 
 help:
 	@just --list
