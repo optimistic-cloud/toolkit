@@ -1,7 +1,7 @@
 use std/log
 
 def backup_db_sqlite [database: path] {
-    print "🔧 Vaultwarden Backup Tool backup sqlite on ($database)"
+    print $"🔧 Vaultwarden Backup Tool backup sqlite on ($database)"
 }
 
 def "main restore" [--restore-id: number --restore-path: path] {
