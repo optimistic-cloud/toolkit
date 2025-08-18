@@ -8,4 +8,4 @@ help:
 version:
 	@just --version
 	@restic version
-	@ansible version
+	@ansible --version
