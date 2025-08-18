@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+
+FROM alpine:3
+
+ARG USER_NAME="toolkit"
+ARG USER_ID="1010"
+
+
+COPY scripts/*.sh /app/
+
+RUN apk add --no-cache just bash curl sqlite tzdata \
+  && addgroup -g "${USER_ID}" "${USER_NAME}" \
+  && adduser -u "${USER_ID}" -Ds /bin/sh -G "${USER_NAME}" "${USER_NAME}"
+
+ENTRYPOINT [ "just" ]
