@@ -1,4 +1,5 @@
-data := "/vaultwarden/data"
+data_path := "/vaultwarden/data"
+restore_path := "/vaultwarden/restore"
 
 # Show all available commands with descriptions
 help:
@@ -6,8 +7,8 @@ help:
 
 # Execute Vaultwarden backup operation
 backup:
-    nu backup.nu --backup-data {{data}}
+    nu main.nu --backup-data {{data_path}}
 
 # Execute Vaultwarden restore operation  
-restore:
-    nu restore.nu
+restore restic_snapshot_id:
+    nu main.nu restore --restore-id {{restic_snapshot_id}} --restore-path {{restore_path}}
