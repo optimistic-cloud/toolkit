@@ -4,7 +4,7 @@ def backup_db_sqlite [database: path] {
     print $"🔧 Vaultwarden Backup Tool backup sqlite on ($database)"
 }
 
-def "main restore" [--restore-id: number --restore-dir: path] {
+def "main restore" [--snapshot-id: number --restore-dir: path] {
     print $"🔧 Vaultwarden Backup Tool main restore ($restore_id)"
 }
 
