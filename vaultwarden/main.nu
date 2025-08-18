@@ -6,7 +6,8 @@ def backup_db_sqlite [database: path, export_dir: path] {
     log debug $"Export directory: ($export_dir)"
     
     if not ($database | path exists) {
-        error make {success: false, error: "Database file does not exist"}
+        log error $"❌ Database file not found: ($database)"
+        error make {msg: "Database file does not exist"}
     }
     
     if not ($export_dir | path exists) {
@@ -16,7 +17,7 @@ def backup_db_sqlite [database: path, export_dir: path] {
             log info $"📁 Created export directory: ($export_dir)"
         } catch {|err|
             log error $"❌ Failed to create export directory: ($err.msg)"
-            error make {success: false, error: $"Cannot create export directory: ($err.msg)"}
+            error make {msg: $"Cannot create export directory: ($err.msg)"}
         }
     }
     
