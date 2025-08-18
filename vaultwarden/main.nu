@@ -1,7 +1,7 @@
 use std/log
 
-def backup_db_sqlite [] {
-    print "🔧 Vaultwarden Backup Tool backup sqlite"
+def backup_db_sqlite [database: path] {
+    print "🔧 Vaultwarden Backup Tool backup sqlite on ($database)"
 }
 
 def "main restore" [--restore-id: number --restore-path: path] {
@@ -16,6 +16,6 @@ def main [--backup-data: path] {
         error make {msg: $"Backup path does not exist: ($backup_data)"}
     }
 
-    backup_db_sqlite 
+    backup_db_sqlite $"($backup_data)/.db.sqlite3"
 
 }
