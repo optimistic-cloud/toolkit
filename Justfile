@@ -3,3 +3,4 @@ help:
 
 version:
 	@just --version
+    @restic version
