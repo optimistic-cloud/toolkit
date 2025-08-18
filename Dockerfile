@@ -12,5 +12,6 @@ RUN apk add --no-cache just bash nushell curl sqlite tzdata restic \
   && adduser -u "${USER_ID}" -Ds /bin/sh -G "${USER_NAME}" "${USER_NAME}"
 
 COPY Justfile ./Justfile
+COPY vaultwarden ./vaultwarden
 
 ENTRYPOINT [ "just" ]
