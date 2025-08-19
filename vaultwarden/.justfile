@@ -63,7 +63,7 @@ backup:
 backup-nu:
     #!/usr/bin/env nu
     use std/log
-    use backup_utils.nu *
+    use vaultwarden/backup_utils.nu *
     
     try {
         hc_ping "start"
@@ -80,4 +80,3 @@ backup-nu:
 # Execute Vaultwarden restore operation
 restore snapshot_id:
     nu main.nu restore --snapshot-id {{snapshot_id}} --restore-dir {{restore_dir}}
-    
