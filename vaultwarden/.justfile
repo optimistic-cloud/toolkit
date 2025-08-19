@@ -65,12 +65,12 @@ backup-nu:
     use std/log
 
 
-    def ping [slug: string, endpoint: string = ""] {
+    def ping [slug: string] {
         let url = $"https://hc-ping.com/($env.HC_PING_KEY)/($slug)"
         let timeout = 10sec
         try {
-            log info $"Pinging: ($url)/($endpoint)"
-            http get $"($url)/($endpoint)" --max-time $timeout | ignore
+            log info $"Pinging: ($url)"
+            http get $url --max-time $timeout | ignore
         } catch {|err|
             log warning $"Healthcheck failed: ($err.msg)"
         }
@@ -79,7 +79,7 @@ backup-nu:
         try {
             ping $"($slug)/start"
             do $operation
-            ping $"($slug)"
+            ping $slug
         } catch {|err|
             ping $"($slug)/fail"
             error make $err
