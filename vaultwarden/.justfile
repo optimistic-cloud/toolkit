@@ -80,6 +80,7 @@ backup-nu:
             do $operation
             ping $slug
         } catch {|err|
+            log error $"Something went wrong: ($err.msg)"
             ping $"($slug)/fail"
             error make $err
         }
