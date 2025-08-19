@@ -114,7 +114,7 @@ backup-nu:
 
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/var/lib/vaultwarden/backup"
-        create-backup-archive --working-dir "$working_dir" --data-dir "$working_dir"
+        #create-backup-archive --working-dir "$working_dir" --data-dir "$working_dir"
         #backup                --backup-dir "$working_dir"
     }
 
