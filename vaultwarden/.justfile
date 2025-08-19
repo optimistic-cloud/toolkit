@@ -65,7 +65,11 @@ backup-nu:
     use std/log
 
     def hc_ping [endpoint: string] {
-        let url = $"https://hc-ping.com/($env.HC_PING_KEY)/test"
+        let url = if ($env.HC_PING_KEY? | is-empty) {
+            error make {msg: "HC_PING_KEY environment variable is not set"}
+        } else {
+            $"https://hc-ping.com/($env.HC_PING_KEY)/test"
+        }
         let full_url = if ($endpoint == "") { $url } else { $"($url)/($endpoint)" }
         let timeout = 10sec
         
