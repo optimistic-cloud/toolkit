@@ -63,19 +63,38 @@ backup:
 backup-nu:
     #!/usr/bin/env nu
     use std/log
-    use vaultwarden/backup_utils.nu *
-    
-    try {
-        hc_ping "start"
-        
-        hc_ping ""
-        log info "🎉 Backup process completed"
-        
-    } catch {|err|
-        log error $"Backup failed: ($err.msg)"
-        hc_ping "fail"
-        error make {msg: $"Backup failed: ($err.msg)"}
+
+
+    def ping [slug: string, endpoint: string = ""] {
+        let url = $"https://hc-ping.com/($env.HC_PING_KEY)/($slug)"
+        let timeout = 10sec
+        try {
+            http get $"($url)/($endpoint)" --max-time $timeout | ignore
+        } catch {|err|
+            log warning $"Healthcheck failed: ($err.msg)"
+        }
     }
+    def with-healthcheck [slug: string, operation: closure] {
+        try {
+            ping $"($slug)/start"
+            do $operation
+            ping $"($slug)"
+        } catch {|err|
+            ping $"($slug)/fail"
+            error make $err
+        }
+    }
+
+    with-healthcheck $env.HC_SLUG { 
+        log info "🔧 Starting backup operations"
+        
+        # Your actual backup operations would go here
+        # create_backup_archive
+        # process_repositories
+        
+        log info "🎉 Backup process completed"
+    }
+
 
 # Execute Vaultwarden restore operation
 restore snapshot_id:
