@@ -94,6 +94,8 @@ backup-nu:
 
             ls $data_dir | print
 
+            log info "0"
+            which rsync
             rsync -a --delete "$data_dir/" "$working_dir/"
             log info "1"
 
