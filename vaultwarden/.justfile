@@ -65,8 +65,8 @@ backup-nu:
     use std/log
 
     def hc_ping [endpoint: string] {
-        let url = "https://hc-ping.com/vaultwarden/"
-        let full_url = if ($endpoint == "") { $url } else { $"($url)($endpoint)" }
+        let url = "https://hc-ping.com/24de52c4-24ce-4277-bd4b-99d893fcd4e9"
+        let full_url = if ($endpoint == "") { $url } else { $"($url)/($endpoint)" }
         let timeout = 10sec
         
         try {
