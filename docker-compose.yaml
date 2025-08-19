@@ -22,7 +22,7 @@ services:
       - HC_SLUG=test
       - HC_PING_KEY=b37Z18hrIp5ajAZ9iBH1lg
     volumes:
-      - vaultwarden-data:/bitwarden/data/
+      - vaultwarden-data:/vaultwarden/data/
       #- path/to/vaultwarden-data:/vaultwarden/data/
       #- path/to/vaultwarden-restic-cache:/vaultwarden/restic-cache/
       #- path/to/vaultwarden-restic-passwords:/vaultwarden/restic-passwords/

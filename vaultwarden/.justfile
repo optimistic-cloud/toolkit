@@ -92,7 +92,7 @@ backup-nu:
             let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
             let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-            ls $data-dir | print
+            ls $data_dir | print
 
             #rsync -a --delete "$data_dir/" "$working_dir/"
 
@@ -114,7 +114,7 @@ backup-nu:
 
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/var/lib/vaultwarden/backup"
-        create-backup-archive --working-dir "$working_dir" --data-dir "$working_dir"
+        create-backup-archive --working-dir "$working_dir" --data-dir "/vaultwarden/data/"
         #backup                --backup-dir "$working_dir"
     }
 
