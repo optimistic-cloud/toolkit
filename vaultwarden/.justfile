@@ -90,12 +90,14 @@ backup-nu:
         let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
         let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-        rsync -a --delete "$data_dir/" "$working_dir/"
+        ls -la $data_dir
 
-        sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
-        tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
+        #rsync -a --delete "$data_dir/" "$working_dir/"
 
-        ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+        #sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
+        #tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
+
+        #ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
     }
 
     def backup [--backup-dir: path] {
