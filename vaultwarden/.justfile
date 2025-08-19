@@ -7,132 +7,161 @@ help:
 	@just --list
 
 # Execute Vaultwarden backup operation with error handling
+# Goal 1: multiple restic repositories
+#   Mount a directory with restic repositories password files
+#   Mount a restic cache directory
+# Goal 2: Scheduler 
 backup:
     #!/usr/bin/env bash
     set -euo pipefail
     
+
+
+    curl -fsS -m 10 --retry 5 -o /dev/null "https://hc-ping.com/vaultwarden/start"
+
     cleanup() {
         curl -fsS -m 10 --retry 2 -o /dev/null "https://hc-ping.com/vaultwarden/fail" || true
         exit 1
     }
     
+    create_backup_archive() {
+        sqlite3 "/vaultwarden/data/db.sqlite3" ".backup '/vaultwarden/data/db-export.sqlite3'"
+
+        tar -cf - /vaultwarden/data | zstd -3q --rsyncable -o /vaultwarden/data/data.tar.zst
+    }
+
+    run_restic() {
+        restic backup --host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}"
+        restic forget --keep-within 180d --prune
+        restic check --read-data-subset 100%
+    }
+
     trap cleanup ERR INT TERM
     
-    curl -fsS -m 10 --retry 5 -o /dev/null "https://hc-ping.com/vaultwarden/start"
-    
-    sqlite3 "/vaultwarden/data/db.sqlite3" ".backup '/vaultwarden/data/db-export.sqlite3'"
-    
-		tar -cf - /path/to/your/data | zstd -3q --rsyncable | restic backup --stdin --stdin-filename data.tar.zst -r /path/to/restic/repo
+    create_backup_archive
 
+    for repo in /vaultwarden/restic-repos/*; do
+        HC_PING_KEY="ascascsscsac" \
+        RESTIC_REPOSITORY="$repo" \
+        RESTIC_PASSWORD_FILE="$repo/password" \
+        RESTIC_CACHE_DIR="/vaultwarden/restic-cache" \
+        AWS_ACCESS_KEY_ID="your_aws_access_key_id" \
+        AWS_SECRET_ACCESS_KEY="your_aws_secret_access_key" \
+        AWS_DEFAULT_REGION="your_aws_default_region" \
+        run_restic
+    done
 
-    restic backup /vaultwarden/data --host "${HOSTNAME:-localhost}" --tag "${restic_tags:-vaultwarden}" --quiet
-    restic forget --keep-within 180d --prune --quiet
-    restic check --read-data-subset 100% --quiet
-    
     curl -fsS -m 10 --retry 5 -o /dev/null "https://hc-ping.com/vaultwarden"
     
     trap - ERR INT TERM
-    
-# Execute Vaultwarden restore operation with comprehensive error handling
-restore snapshot_id:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    
-    # Global variables for cleanup
-    TEMP_DIR=""
-    LOCK_FILE="/tmp/vaultwarden-restore.lock"
-    
-    # Comprehensive cleanup function
-    cleanup() {
-        local exit_code=$?
-        echo "🧹 Performing cleanup (exit code: $exit_code)..."
+
+# Execute Vaultwarden backup operation with error handling
+# Goal 1: multiple restic repositories
+#   Mount a directory with restic repositories password files
+#   Mount a restic cache directory
+# Goal 2: Scheduler 
+backup-nu:
+    #!/usr/bin/env nu
+    use std/log
+
+    def hc_ping [endpoint: string] {
+        let url = "https://hc-ping.com/vaultwarden/"
+        let full_url = if ($endpoint == "") { $url } else { $"($url)($endpoint)" }
+        let timeout = 10sec
         
-        # Remove lock file
-        [[ -f "$LOCK_FILE" ]] && rm -f "$LOCK_FILE"
-        
-        # Clean up temporary directory
-        [[ -n "$TEMP_DIR" && -d "$TEMP_DIR" ]] && rm -rf "$TEMP_DIR"
-        
-        # Send appropriate notification based on exit code
-        if [[ $exit_code -eq 0 ]]; then
-            echo "✅ Restore completed successfully"
-        else
-            echo "❌ Restore failed with exit code: $exit_code"
-            curl -fsS -m 10 --retry 2 -o /dev/null "https://hc-ping.com/{{uuid}}/fail" || true
-        fi
-        
-        exit $exit_code
+        try {
+            http get $full_url --max-time $timeout | ignore
+        } catch {|err|
+            log error $"Failed to send a ping: ($err.msg)"
+            error make {msg: $"Failed to send a ping: ($err.msg)"}
+        }
     }
     
-    # Set up comprehensive trap
-    trap cleanup EXIT
-    trap 'echo "🛑 Received interrupt signal"; exit 130' INT
-    trap 'echo "🛑 Received termination signal"; exit 143' TERM
-    trap 'echo "❌ Error occurred on line $LINENO"; exit 1' ERR
+    def create_backup_archive [] {
+        ^sqlite3 "/vaultwarden/data/db.sqlite3" ".backup '/vaultwarden/data/db-export.sqlite3'"
+        
+        ^tar -cf - /vaultwarden/data | ^zstd -3q --rsyncable -o /vaultwarden/data/data.tar.zst
+        
+        if not ("/vaultwarden/data/db-export.sqlite3" | path exists) {
+            log error "Database backup failed"
+            error make {msg: $"Database backup failed"}
+        }
+        
+        if not ("/vaultwarden/data/data.tar.zst" | path exists) {
+            log error "Archive creation failed"
+            error make {msg: $"Archive creation failed"}
+        }
+    }
     
-    # Check if another restore is running
-    if [[ -f "$LOCK_FILE" ]]; then
-        echo "❌ Another restore operation is already running"
-        exit 1
-    fi
+    # def run_restic [] {
+    #     let hostname = ($env.HOSTNAME? | default (sys host | get hostname))
+    #     let tags = ($env.restic_tags? | default "vaultwarden")
+        
+    #     try {
+    #         print "☁️  Starting restic backup..."
+    #         ^restic backup --host $hostname --tag $tags /vaultwarden/data
+            
+    #         print "🗑️  Cleaning up old snapshots..."
+    #         ^restic forget --keep-within "180d" --prune
+            
+    #         print "✅ Verifying backup integrity..."
+    #         ^restic check --read-data-subset "100%"
+            
+    #         print "🎉 Restic operations completed successfully"
+    #     } catch {|err|
+    #         print $"❌ Restic operation failed: ($err.msg)"
+    #         cleanup
+    #     }
+    # }
     
-    # Create lock file
-    echo $$ > "$LOCK_FILE"
-    
-    echo "🔧 Starting Vaultwarden restore for snapshot: {{snapshot_id}}"
-    
-    # Create temporary directory
-    TEMP_DIR=$(mktemp -d "/tmp/vaultwarden-restore.XXXXXX")
-    echo "📁 Using temporary directory: $TEMP_DIR"
-    
-    # Run the actual restore
+    try {
+        hc_ping "start"
+        
+        #create_backup_archive
+        
+        # # Get list of repository directories
+        # let repo_dirs = (ls /vaultwarden/restic-repos/ | where type == dir | get name)
+        
+        # if ($repo_dirs | length) == 0 {
+        #     print "❌ No restic repositories found in /vaultwarden/restic-repos/"
+        #     cleanup
+        # }
+        
+        # print $"📋 Found (($repo_dirs | length)) restic repositories"
+        
+        # # Process each repository
+        # for repo in $repo_dirs {
+        #     print $"🚀 Processing repository: ($repo | path basename)"
+            
+        #     # Set environment variables for this repository
+        #     $env.HC_PING_KEY = "ascascsscsac"
+        #     $env.RESTIC_REPOSITORY = $repo
+        #     $env.RESTIC_PASSWORD_FILE = ($repo | path join "password")
+        #     $env.RESTIC_CACHE_DIR = "/vaultwarden/restic-cache"
+        #     $env.AWS_ACCESS_KEY_ID = "your_aws_access_key_id"
+        #     $env.AWS_SECRET_ACCESS_KEY = "your_aws_secret_access_key"
+        #     $env.AWS_DEFAULT_REGION = "your_aws_default_region"
+            
+        #     # Verify password file exists
+        #     if not ($env.RESTIC_PASSWORD_FILE | path exists) {
+        #         print $"❌ Password file not found: ($env.RESTIC_PASSWORD_FILE)"
+        #         continue
+        #     }
+            
+        #     # Run restic operations for this repository
+        #     run_restic
+            
+        #     print $"✅ Repository ($repo | path basename) completed successfully"
+        # }
+        
+        hc_ping
+        
+    } catch {|err|
+        log error "Backup failed!"
+        error make {msg: $"Backup failed!"}
+    }
+
+# Execute Vaultwarden restore operation
+restore snapshot_id:
     nu main.nu restore --snapshot-id {{snapshot_id}} --restore-dir {{restore_dir}}
     
-    echo "🎉 Restore operation completed!"
-
-# Example: Simple trap for basic error handling
-simple-backup:
-    #!/usr/bin/env bash
-    set -e  # Exit on any error
-    
-    # Simple error handler
-    trap 'echo "❌ Backup failed at line $LINENO"; exit 1' ERR
-    trap 'echo "🛑 Backup interrupted"; exit 130' INT
-    
-    echo "📋 Simple backup starting..."
-    cp "/vaultwarden/data/db.sqlite3" "/backup/db-$(date +%Y%m%d).sqlite3"
-    echo "✅ Simple backup completed"
-
-# Example: Advanced trap with logging
-advanced-backup:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    
-    LOG_FILE="/var/log/vaultwarden-backup.log"
-    
-    # Advanced error handler with logging
-    error_handler() {
-        local line_number=$1
-        local error_code=$2
-        local command="$3"
-        
-        {
-            echo "=================================="
-            echo "ERROR OCCURRED: $(date)"
-            echo "Line: $line_number"
-            echo "Exit code: $error_code" 
-            echo "Command: $command"
-            echo "=================================="
-        } >> "$LOG_FILE"
-        
-        echo "❌ Error on line $line_number (exit $error_code): $command"
-        echo "📝 Details logged to: $LOG_FILE"
-        exit $error_code
-    }
-    
-    # Set up advanced trap
-    trap 'error_handler $LINENO $? "$BASH_COMMAND"' ERR
-    
-    echo "🔧 Advanced backup with logging..."
-    # Your backup commands here
-    echo "✅ Advanced backup completed"

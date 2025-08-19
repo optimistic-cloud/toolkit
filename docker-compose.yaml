@@ -3,6 +3,11 @@ services:
   backup:
     image: ghcr.io/optimistic-cloud/toolkit:latest
     command: vaultwarden backup
-    restart: never
+    restart: unless-stopped
+    environment:
+      - CRON=0 1 * * *
     volumes:
-      - vaultwarden-data:/vaultwarden/data/
+      - path/to/vaultwarden-data:/vaultwarden/data/
+      - path/to/vaultwarden-restic-cache:/vaultwarden/restic-cache/
+      - path/to/vaultwarden-restic-passwords:/vaultwarden/restic-passwords/
+      - path/to/vaultwarden-restic-config:/vaultwarden/config/

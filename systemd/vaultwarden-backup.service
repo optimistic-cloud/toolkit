@@ -1,0 +1,40 @@
+# Systemd service file
+[Unit]
+Description=Vaultwarden Backup Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+User=backup
+Group=backup
+
+# Environment variables
+Environment=CONFIG_FILE=/etc/vaultwarden-backup/config.yml
+EnvironmentFile=-/etc/vaultwarden-backup/secrets.env
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Writable directories
+ReadWritePaths=/var/lib/vaultwarden
+ReadWritePaths=/var/log/vaultwarden-backup
+ReadWritePaths=/tmp
+
+# Execution
+ExecStart=/usr/local/bin/vaultwarden-backup --config ${CONFIG_FILE}
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vaultwarden-backup
+
+[Install]
+WantedBy=multi-user.target

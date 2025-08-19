@@ -1,0 +1,74 @@
+
+
+
+backup:
+  # Global settings
+  data_dir: "/vaultwarden/data"
+  temp_dir: "/tmp/vaultwarden-backup"
+  healthcheck_url: "https://hc-ping.com/your-uuid"
+  
+  # Database settings
+  database:
+    path: "/vaultwarden/data/db.sqlite3"
+    export_name: "db-export.sqlite3"
+    
+  # Restic repositories
+  repositories:
+    - name: "aws-s3"
+      type: "s3"
+      url: "s3:s3.amazonaws.com/my-vaultwarden-backups"
+      password_env: "RESTIC_PASSWORD_AWS"
+      priority: 1  # 1 = highest priority
+      retention:
+        keep_daily: 7
+        keep_weekly: 4
+        keep_monthly: 12
+        keep_yearly: 2
+        
+    - name: "backblaze-b2"
+      type: "b2"
+      url: "b2:my-bucket:vaultwarden/"
+      password_env: "RESTIC_PASSWORD_B2"
+      priority: 2
+      retention:
+        keep_daily: 14
+        keep_weekly: 8
+        keep_monthly: 24
+
+        
+    - name: "sftp-backup"
+      type: "sftp"
+      url: "sftp:user@backup.example.com:/backups/vaultwarden"
+      password_env: "RESTIC_PASSWORD_SFTP"
+      priority: 3
+      retention:
+        keep_daily: 30
+        keep_weekly: 12
+        keep_monthly: 36
+
+  # Execution settings
+  execution:
+    mode: "sequential"  # sequential, parallel, priority
+    timeout: 3600       # seconds
+    max_retries: 3
+    parallel_jobs: 2    # if mode is parallel
+    
+  # Systemd scheduler settings
+  schedule:
+    frequency: "daily"
+    time: "02:00"
+    randomize_delay: "30min"
+    
+# Notification settings
+notifications:
+  on_start: true
+  on_success: true
+  on_failure: true
+  
+  # Multiple notification methods
+  methods:
+    - type: "healthcheck"
+      url: "https://hc-ping.com/your-uuid"
+    - type: "webhook"
+      url: "https://hooks.slack.com/services/..."
+      on_failure_only: true

@@ -1,0 +1,19 @@
+# Systemd timer file  
+[Unit]
+Description=Vaultwarden Backup Timer
+Requires=vaultwarden-backup.service
+
+[Timer]
+# Run daily at 2 AM with up to 30 minutes randomization
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30min
+
+# Accuracy (how close to scheduled time)
+AccuracySec=15min
+
+# Wake system from sleep if needed (for laptops/desktops)
+WakeSystem=false
+
+[Install]
+WantedBy=timers.target

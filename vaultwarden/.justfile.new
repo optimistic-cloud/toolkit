@@ -1,0 +1,204 @@
+data_dir := "/vaultwarden/data"
+restore_dir := "/vaultwarden/restore" 
+restic_cache_dir := "/vaultwarden/restic-cache"
+config_file := "config.nuon"
+
+# Show all available commands with descriptions
+help:
+	@just --list
+
+# Config-driven backup using Nushell (RECOMMENDED)
+backup:
+    #!/usr/bin/env nu
+    let config = (open {{config_file}})
+    
+    print "🔧 Starting config-driven Vaultwarden backup"
+    print $"📋 Using config: {{config_file}}"
+    
+    # Send start notification
+    try {
+        http get ($config.backup.healthcheck_url + "/start")
+    } catch {
+        print "⚠️  Start notification failed"
+    }
+    
+    # Database backup
+    let db_path = $config.backup.database.path
+    let export_path = ($config.backup.temp_dir | path join $config.backup.database.export_name)
+    
+    print $"📁 Backing up database: ($db_path)"
+    mkdir $config.backup.temp_dir
+    ^sqlite3 $db_path $".backup '($export_path)'"
+    
+    # Backup to repositories based on execution mode
+    let repos = $config.backup.repositories
+    mut failed_repos = []
+    
+    match $config.backup.execution.mode {
+        "sequential" => {
+            print $"☁️  Sequential backup to (($repos | length)) repositories"
+            
+            for repo in $repos {
+                print $"📤 Backing up to ($repo.name)..."
+                
+                $env.RESTIC_REPOSITORY = $repo.url
+                $env.RESTIC_PASSWORD = ($env | get $repo.password_env)
+                
+                try {
+                    ^restic backup $config.backup.data_dir --tag ($repo.tags | str join ",") --quiet
+                    
+                    # Cleanup based on retention policy
+                    let retention = $repo.retention
+                    ^restic forget --keep-daily $retention.keep_daily --keep-weekly $retention.keep_weekly --keep-monthly $retention.keep_monthly --prune --quiet
+                    
+                    print $"✅ ($repo.name) backup successful"
+                } catch {
+                    print $"❌ ($repo.name) backup failed"
+                    $failed_repos = ($failed_repos | append $repo.name)
+                }
+            }
+        }
+        
+        "parallel" => {
+            print $"🚀 Parallel backup to (($repos | length)) repositories"
+            
+            let results = ($repos | par-each {|repo|
+                $env.RESTIC_REPOSITORY = $repo.url
+                $env.RESTIC_PASSWORD = ($env | get $repo.password_env)
+                
+                try {
+                    ^restic backup $config.backup.data_dir --tag ($repo.tags | str join ",") --quiet
+                    let retention = $repo.retention
+                    ^restic forget --keep-daily $retention.keep_daily --keep-weekly $retention.keep_weekly --keep-monthly $retention.keep_monthly --prune --quiet
+                    
+                    {repo: $repo.name, status: "success"}
+                } catch {
+                    {repo: $repo.name, status: "failed"}
+                }
+            })
+            
+            # Process results
+            for result in $results {
+                if $result.status == "success" {
+                    print $"✅ ($result.repo) backup successful"
+                } else {
+                    print $"❌ ($result.repo) backup failed"
+                    $failed_repos = ($failed_repos | append $result.repo)
+                }
+            }
+        }
+    }
+    
+    # Send final notification
+    if ($failed_repos | length) > 0 {
+        print $"❌ Failed repositories: ($failed_repos | str join ', ')"
+        try {
+            http get ($config.backup.healthcheck_url + "/fail")
+        } catch {}
+        exit 1
+    } else {
+        print "🎉 All backups completed successfully!"
+        try {
+            http get $config.backup.healthcheck_url
+        } catch {}
+    }
+
+# Generate systemd service and timer files
+setup-systemd:
+    #!/usr/bin/env nu
+    let config = (open {{config_file}})
+    
+    print "🔧 Generating systemd configuration..."
+    
+    # Create systemd directory
+    mkdir systemd
+    
+    # Generate service file with current paths
+    let service_content = $"[Unit]
+Description=Vaultwarden Backup Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=($env.USER)
+WorkingDirectory=(pwd)
+ExecStart=just backup
+StandardOutput=journal
+StandardError=journal
+"
+    
+    $service_content | save systemd/vaultwarden-backup.service
+    
+    # Generate timer file from config
+    let timer_content = $"[Unit]
+Description=Vaultwarden Backup Timer
+Requires=vaultwarden-backup.service
+
+[Timer]
+OnCalendar=($config.backup.schedule.time)
+Persistent=true
+RandomizedDelaySec=($config.backup.schedule.randomize_delay)
+
+[Install]
+WantedBy=timers.target
+"
+    
+    $timer_content | save systemd/vaultwarden-backup.timer
+    
+    print "📁 Generated files:"
+    ls systemd/
+    
+    print ""
+    print "📋 To install:"
+    print "sudo cp systemd/* /etc/systemd/system/"
+    print "sudo systemctl daemon-reload"
+    print "sudo systemctl enable vaultwarden-backup.timer"
+    print "sudo systemctl start vaultwarden-backup.timer"
+
+# Test configuration file
+test-config:
+    #!/usr/bin/env nu
+    let config = (open {{config_file}})
+    
+    print "🧪 Testing configuration file"
+    print $"📋 Config file: {{config_file}}"
+    print ""
+    
+    print $"🗄️  Database: ($config.backup.database.path)"
+    print $"📁 Data directory: ($config.backup.data_dir)"
+    print $"⚙️  Execution mode: ($config.backup.execution.mode)"
+    print $"🕐 Schedule: ($config.backup.schedule.frequency) at ($config.backup.schedule.time)"
+    print ""
+    
+    print $"☁️  Repositories: (($config.backup.repositories | length))"
+    for repo in $config.backup.repositories {
+        print $"  - ($repo.name): ($repo.type) (priority: ($repo.priority))"
+        
+        # Test environment variable
+        if ($env | get $repo.password_env | is-empty) {
+            print $"    ❌ Missing environment variable: ($repo.password_env)"
+        } else {
+            print $"    ✅ Password environment variable found"
+        }
+    }
+
+# Validate all repositories are accessible
+validate-repos:
+    #!/usr/bin/env nu
+    let config = (open {{config_file}})
+    
+    print "🔍 Validating repository access..."
+    
+    for repo in $config.backup.repositories {
+        print $"Testing ($repo.name)..."
+        
+        $env.RESTIC_REPOSITORY = $repo.url
+        $env.RESTIC_PASSWORD = ($env | get $repo.password_env)
+        
+        try {
+            ^restic snapshots --last 1 --quiet
+            print $"  ✅ ($repo.name) accessible"
+        } catch {
+            print $"  ❌ ($repo.name) not accessible or empty"
+        }
+    }
