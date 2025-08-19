@@ -154,7 +154,7 @@ backup-nu:
         #     print $"✅ Repository ($repo | path basename) completed successfully"
         # }
         
-        hc_ping
+        hc_ping ""
         
     } catch {|err|
         log error "Backup failed!"
