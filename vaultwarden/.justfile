@@ -64,12 +64,11 @@ backup-nu:
     #!/usr/bin/env nu
     use std/log
 
-
     def ping [slug: string] {
         let url = $"https://hc-ping.com/($env.HC_PING_KEY)/($slug)"
         let timeout = 10sec
         try {
-            log info $"Pinging: ($url)"
+            log debug $"Pinging: ($url)"
             http get $url --max-time $timeout | ignore
         } catch {|err|
             log warning $"Healthcheck failed: ($err.msg)"
@@ -86,14 +85,24 @@ backup-nu:
         }
     }
 
-    with-healthcheck $env.HC_SLUG { 
-        log info "🔧 Starting backup operations"
-        
-        # Your actual backup operations would go here
-        # create_backup_archive
-        # process_repositories
-        
-        log info "🎉 Backup process completed"
+    def create_backup_archive [--working-dir: path, --data-dir: path] {
+        rsync -a --delete "$data_dir/" "$working_dir/"
+
+        sqlite3 "$data_dir/db.sqlite3" ".backup '$working_dir/db-export.sqlite3'"
+        tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$working_dir/data.tar.zst"
+        find "$working_dir" ! -name 'data.tar.zst' -mindepth 1 -delete
+    }
+
+    def backup [--backup-dir: path] {
+        restic backup --host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}" --path "$backup_dir"
+        restic forget --keep-within 180d --prune
+        restic check --read-data-subset 100%
+    }
+
+    with-healthcheck $env.HC_SLUG {
+        let working_dir = "/var/lib/vaultwarden/backup"
+        create-backup-archive --working-dir "$working_dir" --data-dir "$working_dir"
+        #backup                --backup-dir "$working_dir"
     }
 
 
