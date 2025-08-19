@@ -63,108 +63,18 @@ backup:
 backup-nu:
     #!/usr/bin/env nu
     use std/log
-
-    def hc_ping [endpoint: string] {
-        if ($env.HC_PING_KEY? | is-empty) {
-            log warning "HC_PING_KEY environment variable is not set, skipping healthcheck"
-            return
-        }
-        
-        let url = $"https://hc-ping.com/($env.HC_PING_KEY)"
-        let full_url = if ($endpoint == "") { $url } else { $"($url)/($endpoint)" }
-        let timeout = 10sec
-        
-        try {
-            http get $full_url --max-time $timeout | ignore
-            log info $"Successfully called healthcheck endpoint: ($full_url)"
-        } catch {|err|
-            log warning $"Failed to send healthcheck ping: ($err.msg)"
-            # Don't fail the entire backup for healthcheck failures
-        }
-    }
-    
-    def create_backup_archive [] {
-        ^sqlite3 "/vaultwarden/data/db.sqlite3" ".backup '/vaultwarden/data/db-export.sqlite3'"
-        
-        ^tar -cf - /vaultwarden/data | ^zstd -3q --rsyncable -o /vaultwarden/data/data.tar.zst
-        
-        if not ("/vaultwarden/data/db-export.sqlite3" | path exists) {
-            log error "Database backup failed"
-            error make {msg: $"Database backup failed"}
-        }
-        
-        if not ("/vaultwarden/data/data.tar.zst" | path exists) {
-            log error "Archive creation failed"
-            error make {msg: $"Archive creation failed"}
-        }
-    }
-    
-    # def run_restic [] {
-    #     let hostname = ($env.HOSTNAME? | default (sys host | get hostname))
-    #     let tags = ($env.restic_tags? | default "vaultwarden")
-        
-    #     try {
-    #         print "☁️  Starting restic backup..."
-    #         ^restic backup --host $hostname --tag $tags /vaultwarden/data
-            
-    #         print "🗑️  Cleaning up old snapshots..."
-    #         ^restic forget --keep-within "180d" --prune
-            
-    #         print "✅ Verifying backup integrity..."
-    #         ^restic check --read-data-subset "100%"
-            
-    #         print "🎉 Restic operations completed successfully"
-    #     } catch {|err|
-    #         print $"❌ Restic operation failed: ($err.msg)"
-    #         cleanup
-    #     }
-    # }
+    use backup_utils.nu *
     
     try {
         hc_ping "start"
         
-        #create_backup_archive
-        
-        # # Get list of repository directories
-        # let repo_dirs = (ls /vaultwarden/restic-repos/ | where type == dir | get name)
-        
-        # if ($repo_dirs | length) == 0 {
-        #     print "❌ No restic repositories found in /vaultwarden/restic-repos/"
-        #     cleanup
-        # }
-        
-        # print $"📋 Found (($repo_dirs | length)) restic repositories"
-        
-        # # Process each repository
-        # for repo in $repo_dirs {
-        #     print $"🚀 Processing repository: ($repo | path basename)"
-            
-        #     # Set environment variables for this repository
-        #     $env.HC_PING_KEY = "ascascsscsac"
-        #     $env.RESTIC_REPOSITORY = $repo
-        #     $env.RESTIC_PASSWORD_FILE = ($repo | path join "password")
-        #     $env.RESTIC_CACHE_DIR = "/vaultwarden/restic-cache"
-        #     $env.AWS_ACCESS_KEY_ID = "your_aws_access_key_id"
-        #     $env.AWS_SECRET_ACCESS_KEY = "your_aws_secret_access_key"
-        #     $env.AWS_DEFAULT_REGION = "your_aws_default_region"
-            
-        #     # Verify password file exists
-        #     if not ($env.RESTIC_PASSWORD_FILE | path exists) {
-        #         print $"❌ Password file not found: ($env.RESTIC_PASSWORD_FILE)"
-        #         continue
-        #     }
-            
-        #     # Run restic operations for this repository
-        #     run_restic
-            
-        #     print $"✅ Repository ($repo | path basename) completed successfully"
-        # }
-        
         hc_ping ""
+        log info "🎉 Backup process completed"
         
     } catch {|err|
-        log error "Backup failed! ($err.msg)"
-        error make {msg: $"Backup failed! ($err.msg)"}
+        log error $"Backup failed: ($err.msg)"
+        hc_ping "fail"
+        error make {msg: $"Backup failed: ($err.msg)"}
     }
 
 # Execute Vaultwarden restore operation
