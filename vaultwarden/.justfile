@@ -158,8 +158,8 @@ backup-nu:
         hc_ping ""
         
     } catch {|err|
-        log error "Backup failed!"
-        error make {msg: $"Backup failed!"}
+        log error "Backup failed! ($err.msg)"
+        error make {msg: $"Backup failed! ($err.msg)"}
     }
 
 # Execute Vaultwarden restore operation
