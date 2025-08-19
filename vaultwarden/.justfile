@@ -90,7 +90,11 @@ backup-nu:
 
         sqlite3 "$data_dir/db.sqlite3" ".backup '$working_dir/db-export.sqlite3'"
         tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$working_dir/data.tar.zst"
-        find "$working_dir" ! -name 'data.tar.zst' -mindepth 1 -delete
+        
+        # Clean up all files except data.tar.zst using Nushell
+        ls $working_dir 
+        | where name != ($working_dir | path join "data.tar.zst")
+        | each { |file| rm -rf $file.name }
     }
 
     def backup [--backup-dir: path] {

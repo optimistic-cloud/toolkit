@@ -1,13 +1,36 @@
 services:
 
+  vaultwarden:
+    image: vaultwarden/server:latest
+    restart: always
+    # environment:
+    #   SIGNUPS_ALLOWED: 'false'
+    #   ADMIN_TOKEN: 'your authentication token'
+    ports:
+      - '127.0.0.1:8200:80'
+    volumes:
+      - vaultwarden-data:/data/
+
   backup:
-    image: ghcr.io/optimistic-cloud/toolkit:latest
-    command: vaultwarden backup
+    image: ghcr.io/optimistic-cloud/toolkit
+    command: vaultwarden backup-nu
     restart: unless-stopped
     environment:
       - CRON=0 1 * * *
+      - HC_SLUG=test
+      - HC_PING_KEY=b37Z18hrIp5ajAZ9iBH1lg
     volumes:
-      - path/to/vaultwarden-data:/vaultwarden/data/
-      - path/to/vaultwarden-restic-cache:/vaultwarden/restic-cache/
-      - path/to/vaultwarden-restic-passwords:/vaultwarden/restic-passwords/
-      - path/to/vaultwarden-restic-config:/vaultwarden/config/
+      - vaultwarden-data:/bitwarden/data/
+      #- path/to/vaultwarden-data:/vaultwarden/data/
+      #- path/to/vaultwarden-restic-cache:/vaultwarden/restic-cache/
+      #- path/to/vaultwarden-restic-passwords:/vaultwarden/restic-passwords/
+      #- path/to/vaultwarden-restic-config:/vaultwarden/config/
+
+
+volumes:
+  vaultwarden-data:
+    # Specify the name of the volume where you save the vaultwarden data,
+    # use vaultwarden-data for new users
+    # and bitwardenrs-data for migrated users
+    name: vaultwarden-data
+    # name: bitwardenrs-data
