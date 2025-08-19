@@ -92,7 +92,7 @@ backup-nu:
             let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
             let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-            ls $data_dir
+            ls
 
             #rsync -a --delete "$data_dir/" "$working_dir/"
 
