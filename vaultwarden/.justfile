@@ -65,11 +65,12 @@ backup-nu:
     use std/log
 
     def hc_ping [endpoint: string] {
-        let url = if ($env.HC_PING_KEY? | is-empty) {
-            error make {msg: "HC_PING_KEY environment variable is not set"}
-        } else {
-            $"https://hc-ping.com/($env.HC_PING_KEY)/test"
+        if ($env.HC_PING_KEY? | is-empty) {
+            log warning "HC_PING_KEY environment variable is not set, skipping healthcheck"
+            return
         }
+        
+        let url = $"https://hc-ping.com/($env.HC_PING_KEY)"
         let full_url = if ($endpoint == "") { $url } else { $"($url)/($endpoint)" }
         let timeout = 10sec
         
@@ -77,8 +78,8 @@ backup-nu:
             http get $full_url --max-time $timeout | ignore
             log info $"Successfully called healthcheck endpoint: ($full_url)"
         } catch {|err|
-            log error $"Failed to send a ping: ($err.msg)"
-            error make {msg: $"Failed to send a ping: ($err.msg)"}
+            log warning $"Failed to send healthcheck ping: ($err.msg)"
+            # Don't fail the entire backup for healthcheck failures
         }
     }
     
