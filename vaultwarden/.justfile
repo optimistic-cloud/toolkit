@@ -94,12 +94,14 @@ backup-nu:
 
             ls $data_dir | print
 
-            #rsync -a --delete "$data_dir/" "$working_dir/"
+            rsync -a --delete "$data_dir/" "$working_dir/"
 
-            #sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
-            #tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
+            sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
+            tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
 
-            #ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+            ls $data_dir | print
+            ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+            ls $data_dir | print
         } catch {|err|
             log error $"Creating backup archive failed: ($err.msg)"
             error make $err
