@@ -87,17 +87,22 @@ backup-nu:
     }
 
     def create_backup_archive [--working-dir: path, --data-dir: path] {
-        let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
-        let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
+        try {
+            let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
+            let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-        ls -la $data_dir
+            ls -la $data_dir
 
-        #rsync -a --delete "$data_dir/" "$working_dir/"
+            #rsync -a --delete "$data_dir/" "$working_dir/"
 
-        #sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
-        #tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
+            #sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
+            #tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
 
-        #ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+            #ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+        } catch {|err|
+            log error $"Creating backup archive failed: ($err.msg)"
+            error make $err
+        }
     }
 
     def backup [--backup-dir: path] {
