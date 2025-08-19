@@ -68,7 +68,7 @@ backup-nu:
         let url = $"https://hc-ping.com/($env.HC_PING_KEY)/($slug)"
         let timeout = 10sec
         try {
-            log debug $"Pinging: ($url)"
+            log info $"Pinging: ($url)"
             http get $url --max-time $timeout | ignore
         } catch {|err|
             log warning $"Healthcheck failed: ($err.msg)"
