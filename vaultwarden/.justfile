@@ -71,6 +71,7 @@ backup-nu:
         
         try {
             http get $full_url --max-time $timeout | ignore
+            log info $"Successfully called healthcheck endpoint: ($full_url)"
         } catch {|err|
             log error $"Failed to send a ping: ($err.msg)"
             error make {msg: $"Failed to send a ping: ($err.msg)"}
