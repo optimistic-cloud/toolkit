@@ -12,3 +12,6 @@ version:
 
 backup:
 	nu backup.nu
+
+restore:
+	nu restore.nu
