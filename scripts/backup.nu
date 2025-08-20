@@ -74,12 +74,10 @@ def generate-tags [] {
 
     let restic_version = (restic version | str trim | split row ' ' | get 1)
 
-    let tags = [
+    [
         $"vaultwarden_version=($env.VAULTWARDEN_VERSION)"
         $"restic_version=($restic_version)"
     ]
-    $tags
-    # remove tags variable
 }
 
 def backup [--paths: list<path>, --tags: list<string>] {
