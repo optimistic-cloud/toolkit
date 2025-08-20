@@ -103,6 +103,10 @@ backup-nu:
             let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
             log info $"📦 Creating SQLite backup: ($backup_db_export)"
 
+            print $db_path
+            print $backup_db_export
+            print $".backup '($backup_db_export)'"
+
             ^sqlite3 $db_path $".backup '($backup_db_export)'"
             
             # Verify backup was created successfully
