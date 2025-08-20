@@ -92,8 +92,8 @@ backup-nu:
             log error $"Database file not found: ($db_path)"
             error make {msg: $"Database file does not exist: ($db_path)"}
         }
-        
-        # Check if working directory exists
+
+        # TODO: move out to with-working-dir
         if not ($working_dir | path exists) {
             log error $"Working directory does not exist: ($working_dir)"
             error make {msg: $"Working directory does not exist: ($working_dir)"}
