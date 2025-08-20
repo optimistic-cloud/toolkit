@@ -110,6 +110,7 @@ def main [] {
         } {
             backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
         }
-
+    }
+    
     list-restic-snapshots
 }
