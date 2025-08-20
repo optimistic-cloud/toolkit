@@ -65,7 +65,7 @@ def main [] {
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/tmp"
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
-        ls /vaultwarden/data/
+        ls /vaultwarden/data/ | print
 
         #backup                --backup-dir "$working_dir"
     }
