@@ -106,10 +106,49 @@ backup-nu:
             print $db_path
             print $backup_db_export
             print $".backup '($backup_db_export)'"
-
-            touch $backup_db_export
             
-            ^sqlite3 $db_path $".backup '($backup_db_export)'"
+            # Debug: Check if sqlite3 is available
+            try {
+                let sqlite_version = (^sqlite3 --version | complete)
+                log info $"SQLite version: ($sqlite_version.stdout)"
+            } catch {|err|
+                log error $"SQLite3 not found or not working: ($err.msg)"
+                error make {msg: "SQLite3 command not available"}
+            }
+            
+            # Debug: Check database file permissions and size
+            let db_stat = (ls $db_path | first)
+            log info $"Database file info - Size: ($db_stat.size), Modified: ($db_stat.modified)"
+            
+            # Debug: Check if we can read the database file
+            try {
+                let tables_result = (^sqlite3 $db_path ".tables" | complete)
+                if $tables_result.exit_code == 0 {
+                    log info $"Database is readable, tables found: ($tables_result.stdout | str trim)"
+                } else {
+                    log error $"Cannot read database: ($tables_result.stderr)"
+                }
+            } catch {|err|
+                log error $"Failed to query database: ($err.msg)"
+            }
+            
+            # Debug: Try the backup command with better error capture
+            log info $"Executing: sqlite3 ($db_path) '.backup ($backup_db_export)'"
+            
+            # sqlite3 db.sqlite3 ".backup '/tmp/db-export.sqlite3'"
+            let backup_result = (^sqlite3 $db_path $".backup ($backup_db_export)" | complete)
+            
+            log info $"SQLite backup result - Exit code: ($backup_result.exit_code)"
+            if $backup_result.stdout != "" {
+                log info $"SQLite stdout: ($backup_result.stdout)"
+            }
+            if $backup_result.stderr != "" {
+                log error $"SQLite stderr: ($backup_result.stderr)"
+            }
+            
+            if $backup_result.exit_code != 0 {
+                error make {msg: $"SQLite backup failed with exit code ($backup_result.exit_code): ($backup_result.stderr)"}
+            }
             
             # Verify backup was created successfully
             if not ($backup_db_export | path exists) {
