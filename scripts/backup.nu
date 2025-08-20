@@ -94,6 +94,9 @@ def main [] {
             RESTIC_PASSWORD: "password"
         } {
             let tags = generate-tags
+
+            cat /vaultwarden.env | print
+
             backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
         }
     }
