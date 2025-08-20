@@ -78,8 +78,7 @@ def generate-tags [specific: list<string> = []] {
 
     let common_tags = [
         $"vaultwarden_version:($env.VAULTWARDEN_VERSION)"
-        "environment:production"
-        "restic_version:($restic_version)"
+        $"restic_version:($restic_version)"
     ]
     $common_tags | str join " "
 }
