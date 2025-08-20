@@ -97,6 +97,27 @@ def list-restic-snapshots [] {
     }
 }
 
+export def --env get-vaultwarden-version [] {
+  let cfg: record = http get $"http://vaultwarden/api/config" --max-time 10sec
+  let version: string = $cfg.version
+
+  if ($version == null) or ($version == "") {
+    fail "Unable to retrieve Vaultwarden version"
+  }
+
+  $env.VAULTWARDEN_VERSION = $version
+
+  return $version
+}
+
+def __make-common-backup-tags [specific: list<string> = []] {
+  let common_tags = [
+    $"vaultwarden_version:($env.VAULTWARDEN_VERSION)"
+    "environment:production"
+  ]
+  ([$specific, $common_tags] | flatten) | str join " "
+}
+
 def main [] {
     create-test-restic-repo
 
@@ -108,7 +129,8 @@ def main [] {
             RESTIC_REPOSITORY: "/tmp/restic-repo",
             RESTIC_PASSWORD: "password"
         } {
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
+            get-vaultwarden-version
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags __make-common-backup-tags
         }
     }
 
