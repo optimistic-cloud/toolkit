@@ -130,7 +130,9 @@ def main [] {
             RESTIC_PASSWORD: "password"
         } {
             get-vaultwarden-version
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags __make-common-backup-tags
+            let tags = __make-common-backup-tags
+
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
         }
     }
 
