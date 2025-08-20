@@ -92,7 +92,6 @@ def main [] {
         let cfg = open /config.yaml
 
         for target in $cfg.backups {
-            print $target
             with-env {
                 RESTIC_REPOSITORY: $target.repository,
                 RESTIC_PASSWORD: $target.password
@@ -102,7 +101,8 @@ def main [] {
                 cat /vaultwarden.env | print
                 cat /config.yaml | print
 
-                backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
+                # TODO: add , "/vaultwarden.env" as path
+                backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
             }
         }
     }
