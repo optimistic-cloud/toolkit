@@ -100,6 +100,10 @@ backup-nu:
 
             log info "0"
             which rsync
+            
+            # Create the working directory first
+            mkdir $working_dir
+            
             rsync -a --delete $data_dir $working_dir
             log info "1"
 
