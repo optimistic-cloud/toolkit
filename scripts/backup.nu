@@ -89,16 +89,20 @@ def main [] {
     with-healthcheck $env.HC_SLUG {
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
 
-        with-env {
-            RESTIC_REPOSITORY: "/tmp/restic-repo",
-            RESTIC_PASSWORD: "password"
-        } {
-            let tags = generate-tags
+        let cfg = open /config.yaml
 
-            cat /vaultwarden.env | print
-            cat /config.yaml | print
+        for target in $cfg.backups {
+            with-env {
+                RESTIC_REPOSITORY: $target.repository,
+                RESTIC_PASSWORD: $target.password
+            } {
+                let tags = generate-tags
 
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
+                cat /vaultwarden.env | print
+                cat /config.yaml | print
+
+                backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
+            }
         }
     }
 }
