@@ -88,6 +88,7 @@ def backup [--paths: list<path>, --tags: list<string>] {
 def main [] {
     with-healthcheck $env.HC_SLUG {
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
+        let tags = generate-tags
 
         let cfg = open /config.yaml
 
@@ -96,12 +97,8 @@ def main [] {
                 RESTIC_REPOSITORY: $target.repository,
                 RESTIC_PASSWORD: $target.password
             } {
-                let tags = generate-tags
-
-                cat /vaultwarden.env | print
-                cat /config.yaml | print
-
                 # TODO: add , "/vaultwarden.env" as path
+                log info $"Backuping to: ($target.name)"
                 backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
             }
         }
