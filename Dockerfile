@@ -27,12 +27,17 @@ if [ -n "$CRON" ]; then
     
     # Create cron job with MAILTO="" to disable email completely
     # This prevents cron from trying to send any mail
-    (echo "MAILTO=\"\""; echo "$CRON cd /app && $CRON_CMD") | crontab -
+    (echo "MAILTO=\"\""; echo "$CRON cd /app && $CRON_CMD >> /proc/1/fd/1 2>&1") | crontab -
     
     echo "Cron installed: $CRON"
     echo "Cron command: cd /app && $CRON_CMD"
     echo "Email disabled (MAILTO=\"\")"
     
+    # Show the actual crontab for debugging
+    echo "Current crontab:"
+    crontab -l
+    
+    echo "Starting cron daemon..."
     # Start cron daemon in foreground
     exec crond -f
 else
