@@ -1,18 +1,19 @@
 #!/bin/bash
+set -exuo pipefail
 
-function configure_timezone() {
-    ln -sf "/usr/share/zoneinfo/${TIMEZONE}" "${LOCALTIME_FILE}"
-}
+CRON_CONFIG_FILE="/tmp/crontab"
 
 function configure_cron() {
-    local FIND_CRON_COUNT="$(grep -c 'backup.sh' "${CRON_CONFIG_FILE}" 2> /dev/null)"
-    if [[ "${FIND_CRON_COUNT}" -eq 0 ]]; then
-        echo "${CRON} bash /app/backup.sh" >> "${CRON_CONFIG_FILE}"
+    if [[ -n "${CRON:-}" ]]; then
+        echo "$CRON just vaultwarden backup-nu" > "${CRON_CONFIG_FILE}"
+        
+        cat "${CRON_CONFIG_FILE}"
+        return 0
+    else
+        echo "No CRON schedule specified. Running backup once and exiting."
+        return 1
     fi
 }
 
-configure_timezone
 configure_cron
-
-# foreground run crond
 exec /usr/bin/supercronic -passthrough-logs -quiet "${CRON_CONFIG_FILE}"

@@ -18,7 +18,7 @@ services:
     depends_on:
       - vaultwarden
     environment:
-      - CRON=0 1 * * *
+      - CRON=* * * * *
       - HC_SLUG=test
       - HC_PING_KEY=b37Z18hrIp5ajAZ9iBH1lg
     volumes:
