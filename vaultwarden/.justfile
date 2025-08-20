@@ -87,19 +87,37 @@ backup-nu:
     }
 
     def export-db-sqlite [--data-dir: path, --working-dir: path] {
-        log info $"Creating backup archive in: ($working_dir)"
-        log info $"Creating backup from data in: ($data_dir)"
+        let db_path = ($data_dir | path join "db.sqlite3")
+        if not ($db_path | path exists) {
+            log error $"Database file not found: ($db_path)"
+            error make {msg: $"Database file does not exist: ($db_path)"}
+        }
+        
         try {
+            # TODO: move out here Check if working directory exists
+            if not ($working_dir | path exists) {
+                log error $"Working directory does not exist: ($working_dir)"
+                error make {msg: $"Working directory does not exist: ($working_dir)"}
+            }
+            
             let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
+            log info $"📦 Creating SQLite backup: ($backup_db_export)"
 
-            log info $"backup_db_export: ($backup_db_export)"
-
-            ls $data_dir | print
-
-            log info "0"
-            log info "1"
-
-            sqlite3 ($data_dir | path join "db.sqlite3") ".backup '($backup_db_export)'"
+            ^sqlite3 $db_path $".backup '($backup_db_export)'"
+            
+            # Verify backup was created successfully
+            if not ($backup_db_export | path exists) {
+                log error $"Failed to create database backup at: ($backup_db_export)"
+                error make {msg: "SQLite backup operation failed"}
+            }
+            
+            let backup_info = (ls $backup_db_export | first)
+            if $backup_info.size == 0 {
+                log error $"Created backup file is empty: ($backup_db_export)"
+                error make {msg: "SQLite backup file is empty"}
+            }
+            
+            log info $"✅ Database backup created successfully: ($backup_db_export) (size: ($backup_info.size))"
 
             ls $data_dir | print
             log info "4"
