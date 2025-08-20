@@ -79,12 +79,13 @@ def generate-tags [] {
         $"restic_version=($restic_version)"
     ]
     $tags
+    # remove tags variable
 }
 
 def backup [--paths: list<path>, --tags: list<string>] {
     let tag_args = ($tags | each {|t| ['--tag', $t]} | flatten)
 
-    restic backup ...($paths) $tag_args
+    restic backup ...($paths) ...($tag_args)
     restic forget --keep-within 180d --prune
     restic check --read-data-subset 100%
 }
