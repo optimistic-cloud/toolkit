@@ -33,8 +33,8 @@ if [ -n "$CRON" ]; then
     echo "Cron command: cd /app && $CRON_CMD"
     echo "Email disabled (MAILTO=\"\")"
     
-    # Start cron daemon 
-    exec crond -f -l 2
+    # Start cron daemon in foreground
+    exec crond -f
 else
     # No cron, just run the command
     exec "$@"
