@@ -57,23 +57,13 @@ def export-db-sqlite [--database: path, --target: path] {
 }
 
 def get-vaultwarden-version [] {
-  let cfg: record = http get $"http://vaultwarden/api/config" --max-time 10sec
-  let version: string = $cfg.version
-
-  if ($version == null) or ($version == "") {
-    fail "Unable to retrieve Vaultwarden version"
-  }
-
-  return $version
+    let cfg: record = http get $"http://vaultwarden/api/config" --max-time 10sec
+    let version: string = $cfg.version
+    return $version
 }
 
 def get-restic-version [] {
     let version: string = (restic version | str trim | split row ' ' | get 1)
-
-    if ($version == null) or ($version == "") {
-        fail "Unable to retrieve Restic version"
-    }
-
     return $version
 }
 
