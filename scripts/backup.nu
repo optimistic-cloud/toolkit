@@ -81,10 +81,11 @@ def generate-tags [specific: list<string> = []] {
         "environment:production"
         "restic_version:($restic_version)"
     ]
+    $common_tags | str join " "
 }
 
 def backup [--paths: list<path>] {
-    let tags = generate-tags | flatten str join " "
+    let tags = generate-tags
 
     restic backup ...($paths) --tag $tags
     restic forget --keep-within 180d --prune
@@ -93,7 +94,6 @@ def backup [--paths: list<path>] {
 
 def main [] {
     with-healthcheck $env.HC_SLUG {
-        let working_dir = "/tmp"
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
 
         with-env {
