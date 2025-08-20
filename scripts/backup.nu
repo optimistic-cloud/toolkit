@@ -94,7 +94,7 @@ def main [] {
             RESTIC_PASSWORD: "password"
         } {
             let tags = generate-tags
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
         }
     }
 }
