@@ -93,106 +93,38 @@ backup-nu:
             error make {msg: $"Database file does not exist: ($db_path)"}
         }
         
-        try {
-            # TODO: move out here Check if working directory exists
-            if not ($working_dir | path exists) {
-                log error $"Working directory does not exist: ($working_dir)"
-                error make {msg: $"Working directory does not exist: ($working_dir)"}
-            }
-            
-            let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
-            log info $"📦 Creating SQLite backup: ($backup_db_export)"
+        # Check if working directory exists
+        if not ($working_dir | path exists) {
+            log error $"Working directory does not exist: ($working_dir)"
+            error make {msg: $"Working directory does not exist: ($working_dir)"}
+        }
+        
+        let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
+        log info $"📦 Creating SQLite backup: ($backup_db_export)"
 
-            print $db_path
-            print $backup_db_export
-            print $".backup '($backup_db_export)'"
-            
-            # Debug: Check if sqlite3 is available
-            try {
-                let sqlite_version = (^sqlite3 --version | complete)
-                log info $"SQLite version: ($sqlite_version.stdout)"
-            } catch {|err|
-                log error $"SQLite3 not found or not working: ($err.msg)"
-                error make {msg: "SQLite3 command not available"}
-            }
-            
-            # Debug: Check database file permissions and size
-            let db_stat = (ls $db_path | first)
-            log info $"Database file info - Size: ($db_stat.size), Modified: ($db_stat.modified)"
-            
-            # Debug: Check if we can read the database file
-            try {
-                let tables_result = (^sqlite3 $db_path ".tables" | complete)
-                if $tables_result.exit_code == 0 {
-                    log info $"Database is readable, tables found: ($tables_result.stdout | str trim)"
-                } else {
-                    log error $"Cannot read database: ($tables_result.stderr)"
-                }
-            } catch {|err|
-                log error $"Failed to query database: ($err.msg)"
-            }
-            
-            # Debug: Try the backup command with better error capture
-            log info $"Executing: sqlite3 ($db_path) '.backup ($backup_db_export)'"
-            
-            # sqlite3 db.sqlite3 ".backup '/tmp/db-export.sqlite3'"
+        # Execute SQLite backup
+        try {
             let backup_result = (^sqlite3 $db_path $".backup ($backup_db_export)" | complete)
             
-            log info $"SQLite backup result - Exit code: ($backup_result.exit_code)"
-            if $backup_result.stdout != "" {
-                log info $"SQLite stdout: ($backup_result.stdout)"
-            }
-            if $backup_result.stderr != "" {
-                log error $"SQLite stderr: ($backup_result.stderr)"
-            }
-            
             if $backup_result.exit_code != 0 {
-                error make {msg: $"SQLite backup failed with exit code ($backup_result.exit_code): ($backup_result.stderr)"}
-            }
-            
-            log info "✅ SQLite backup command completed successfully, now verifying..."
-            
-            # Verify backup was created successfully
-            log info $"Checking if backup file exists: ($backup_db_export)"
-            if not ($backup_db_export | path exists) {
-                log error $"❌ Failed to create database backup at: ($backup_db_export)"
-                error make {msg: "SQLite backup operation failed - file not created"}
-            }
-            
-            log info "✅ Backup file exists, checking size..."
-            try {
-                let backup_info = (ls $backup_db_export | first)
-                log info $"Backup file size: ($backup_info.size)"
-                
-                # Convert size to bytes for comparison
-                let size_bytes = ($backup_info.size | into int)
-                log info $"Backup file size in bytes: ($size_bytes)"
-                
-                if $size_bytes == 0 {
-                    log error $"❌ Created backup file is empty: ($backup_db_export)"
-                    error make {msg: "SQLite backup file is empty"}
+                log error $"SQLite backup failed with exit code: ($backup_result.exit_code)"
+                if $backup_result.stderr != "" {
+                    log error $"SQLite stderr: ($backup_result.stderr)"
                 }
-                
-                log info $"✅ Database backup created successfully: ($backup_db_export) (size: ($backup_info.size))"
-                
-            } catch {|err|
-                log error $"❌ Error checking backup file info: ($err.msg)"
-                # Let's be more lenient here - if we can't get file info but the file exists, that's probably OK
-                log warning $"File verification failed, but backup file exists, continuing..."
-                log info $"✅ Database backup created (verification skipped due to error)"
-            }
-
-            # Debug: List data directory contents
-            try {
-                log info "Listing data directory contents:"
-                ls $data_dir | print
-            } catch {|err|
-                log warning $"Could not list data directory: ($err.msg)"
+                error make {msg: $"SQLite backup failed: ($backup_result.stderr)"}
             }
             
-            log info "✅ Backup operation completed successfully"
+            log info $"SQLite backup completed with exit code: ($backup_result.exit_code)"
+            
+            # Simple file existence check
+            if not ($backup_db_export | path exists) {
+                error make {msg: "Backup file was not created"}
+            }
+            
+            log info $"✅ Database backup created successfully: ($backup_db_export)"
+            
         } catch {|err|
-            log error $"Creating backup archive failed: ($err.msg)"
+            log error $"SQLite backup operation failed: ($err.msg)"
             error make $err
         }
     }
