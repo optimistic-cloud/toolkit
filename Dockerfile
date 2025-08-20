@@ -15,4 +15,5 @@ COPY Justfile ./Justfile
 COPY vaultwarden ./vaultwarden
 COPY vaultwarden.cron ./vaultwarden.cron
 
-CMD ["/usr/bin/supercronic", "-passthrough-logs", "-quiet", "/app/vaultwarden.cron"]
+#  "-quiet", 
+CMD ["/usr/bin/supercronic", "-passthrough-logs", "/app/vaultwarden.cron"]
