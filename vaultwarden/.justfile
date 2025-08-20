@@ -99,15 +99,13 @@ backup-nu:
             ls $data_dir | print
 
             log info "0"
-            which rsync
             
-            # Create the working directory first
             mkdir $working_dir
             
             rsync -a --delete $data_dir $working_dir
             log info "1"
 
-            sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
+            sqlite3 $"($data_dir)/db.sqlite3" ".backup '($backup_db_export)'"
             log info "2"
             tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
             log info "3"
