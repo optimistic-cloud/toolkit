@@ -56,7 +56,7 @@ def export-db-sqlite [--database: path, --target: path] {
     }
 }
 
-export def --env get-vaultwarden-version [] {
+def get-vaultwarden-version [] {
   let cfg: record = http get $"http://vaultwarden/api/config" --max-time 10sec
   let version: string = $cfg.version
 
@@ -64,18 +64,25 @@ export def --env get-vaultwarden-version [] {
     fail "Unable to retrieve Vaultwarden version"
   }
 
-  $env.VAULTWARDEN_VERSION = $version
-
   return $version
 }
 
-def generate-tags [] {
-    get-vaultwarden-version
+def get-restic-version [] {
+    let version: string = (restic version | str trim | split row ' ' | get 1)
 
-    let restic_version = (restic version | str trim | split row ' ' | get 1)
+    if ($version == null) or ($version == "") {
+        fail "Unable to retrieve Restic version"
+    }
+
+    return $version
+}
+
+def generate-tags [] {
+    let vw_version = get-vaultwarden-version
+    let restic_version = get-restic-version
 
     [
-        $"vaultwarden_version=($env.VAULTWARDEN_VERSION)"
+        $"vaultwarden_version=($vw_version)"
         $"restic_version=($restic_version)"
     ]
 }
