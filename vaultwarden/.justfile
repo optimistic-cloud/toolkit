@@ -107,6 +107,8 @@ backup-nu:
             print $backup_db_export
             print $".backup '($backup_db_export)'"
 
+            touch $backup_db_export
+            
             ^sqlite3 $db_path $".backup '($backup_db_export)'"
             
             # Verify backup was created successfully
