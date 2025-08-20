@@ -18,7 +18,11 @@ COPY vaultwarden.cron ./vaultwarden.cron
 
 COPY scripts/*.nu .
 
-ENV RESTIC_REPOSITORY="/tmp/restic-repo"
+ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
+ENV RESTIC_PASSWORD="password"
+RUN restic init
+
+ENV RESTIC_REPOSITORY="/tmp/restic-repo-2"
 ENV RESTIC_PASSWORD="password"
 RUN restic init
 
