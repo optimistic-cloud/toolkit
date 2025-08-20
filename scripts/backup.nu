@@ -81,7 +81,7 @@ def generate-tags [specific: list<string> = []] {
     ]
 }
 
-def backup [--tags: list<string>, --paths: list<path>] {
+def backup [--paths: list<path>] {
     let tags = generate-tags | flatten str join " "
 
     restic backup ...($paths) --tag $tags
