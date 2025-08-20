@@ -90,7 +90,6 @@ def main [] {
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
 
         let cfg = open /config.yaml
-        print $cfg
 
         for target in $cfg.backups {
             print $target
