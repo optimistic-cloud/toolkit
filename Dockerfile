@@ -19,12 +19,22 @@ COPY <<'EOF' /entrypoint.sh
 #!/bin/sh
 # If CRON env is set, install cron job and start cron
 if [ -n "$CRON" ]; then
+    # Create crontab cache directory to avoid warning
+    mkdir -p /root/.cache
+    
     # Default command if CRON_CMD not specified
     CRON_CMD="${CRON_CMD:-echo 'No CRON_CMD specified'}"
-    echo "$CRON $CRON_CMD" | crontab -
+    
+    # Create cron job with MAILTO="" to disable email completely
+    # This prevents cron from trying to send any mail
+    (echo "MAILTO=\"\""; echo "$CRON cd /app && $CRON_CMD") | crontab -
+    
     echo "Cron installed: $CRON"
-    echo "Cron command: $CRON_CMD"
-    exec crond -f
+    echo "Cron command: cd /app && $CRON_CMD"
+    echo "Email disabled (MAILTO=\"\")"
+    
+    # Start cron daemon 
+    exec crond -f -l 2
 else
     # No cron, just run the command
     exec "$@"
