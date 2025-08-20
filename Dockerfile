@@ -13,8 +13,6 @@ RUN apk add --no-cache just bash nushell curl sqlite restic supercronic \
 
 COPY Justfile ./Justfile
 COPY vaultwarden ./vaultwarden
-COPY entrypoint.sh ./entrypoint.sh
+COPY vaultwarden.cron ./vaultwarden.cron
 
-RUN chmod +x /app/entrypoint.sh
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/usr/bin/supercronic", "-passthrough-logs", "-quiet", "/app/vaultwarden.cron"]
