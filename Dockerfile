@@ -30,9 +30,18 @@ if [ -n "$CRON" ]; then
 #!/bin/sh
 # Source all environment variables that were available at container start
 if [ -f /tmp/container-env ]; then
-    set -a  # automatically export all variables
-    . /tmp/container-env
-    set +a
+    # Use a safer method to source environment variables
+    # This handles special characters and spaces properly
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        [ -n "$line" ] && [ "${line#\#}" = "$line" ] && {
+            # Only process lines that look like valid env vars (contain =)
+            case "$line" in
+                *=*) export "$line" ;;
+                *) : ;; # Skip invalid lines silently
+            esac
+        }
+    done < /tmp/container-env 2>/dev/null || true
 fi
 cd /app
 exec $@
@@ -40,7 +49,8 @@ WRAPPER_EOF
     chmod +x /usr/local/bin/cron-wrapper.sh
     
     # Save current environment for the wrapper to use
-    env > /tmp/container-env
+    # Filter out problematic variables and quote values properly
+    env | grep -E '^[A-Za-z_][A-Za-z0-9_]*=' | sed 's/=\(.*\)/="\1"/' > /tmp/container-env
     
     # Simple cron job that uses the generic wrapper
     (
