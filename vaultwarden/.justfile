@@ -89,30 +89,33 @@ backup-nu:
     def create-backup-archive [--working-dir: path, --data-dir: path] {
         log info $"Creating backup archive in: ($working_dir)"
         log info $"Creating backup from data in: ($data_dir)"
-        # try {
-        #     let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
-        #     let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
+        try {
+            let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
+            let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-        #     ls $data_dir | print
+            log info $"backup_data_archive: ($backup_data_archive)"
+            log info $"backup_db_export: ($backup_db_export)"
 
-        #     log info "0"
-        #     which rsync
-        #     rsync -a --delete "$data_dir/" "$working_dir/"
-        #     log info "1"
+            ls $data_dir | print
 
-        #     sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
-        #     log info "2"
-        #     tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
-        #     log info "3"
+            log info "0"
+            which rsync
+            rsync -a --delete "$data_dir/" "$working_dir/"
+            log info "1"
 
-        #     ls $data_dir | print
-        #     ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
-        #     log info "4"
-        #     ls $data_dir | print
-        # } catch {|err|
-        #     log error $"Creating backup archive failed: ($err.msg)"
-        #     error make $err
-        # }
+            sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
+            log info "2"
+            tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
+            log info "3"
+
+            ls $data_dir | print
+            ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
+            log info "4"
+            ls $data_dir | print
+        } catch {|err|
+            log error $"Creating backup archive failed: ($err.msg)"
+            error make $err
+        }
     }
 
     def backup [--backup-dir: path] {
