@@ -21,11 +21,19 @@ if [ -n "$CRON" ]; then
     # Default command if CRON_CMD not specified
     CRON_CMD="${CRON_CMD:-echo 'No CRON_CMD specified'}"
     
-    # Create a simple crontab file with proper shell wrapper
-    echo "$CRON /bin/sh -c 'cd /app && $CRON_CMD'" > /tmp/crontab
+    # Create a wrapper script that Supercronic can execute directly
+    cat > /app/cron-job.sh << 'SCRIPT_EOF'
+#!/bin/bash
+cd /app
+exec $CRON_CMD
+SCRIPT_EOF
+    chmod +x /app/cron-job.sh
+    
+    # Create a simple crontab file calling the script directly
+    echo "$CRON bash /app/cron-job.sh" > /tmp/crontab
     
     echo "Supercronic starting with schedule: $CRON"
-    echo "Command: cd /app && $CRON_CMD"
+    echo "Command: bash /app/cron-job.sh (which runs: $CRON_CMD)"
     echo "All environment variables automatically available to jobs"
     
     # Run supercronic with the crontab
