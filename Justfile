@@ -9,3 +9,6 @@ version:
 	@just --version
 	@restic version
 	@ansible --version
+
+sleep:
+	sleep infinite
