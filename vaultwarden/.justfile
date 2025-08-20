@@ -105,7 +105,7 @@ backup-nu:
             rsync -a --delete $data_dir $working_dir
             log info "1"
 
-            sqlite3 $"($data_dir)/db.sqlite3" ".backup '($backup_db_export)'"
+            sqlite3 ($data_dir | path join "db.sqlite3") ".backup '($backup_db_export)'"
             log info "2"
             tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
             log info "3"
@@ -128,7 +128,7 @@ backup-nu:
 
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/var/lib/vaultwarden/backup"
-        create-backup-archive --working-dir $working_dir --data-dir "/vaultwarden/data/"
+        create-backup-archive --working-dir $working_dir --data-dir "/vaultwarden/data"
         #backup                --backup-dir "$working_dir"
     }
 
