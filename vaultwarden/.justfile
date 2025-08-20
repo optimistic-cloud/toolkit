@@ -182,8 +182,15 @@ backup-nu:
                 log info $"✅ Database backup created (verification skipped due to error)"
             }
 
-            ls $data_dir | print
-            log info "4"
+            # Debug: List data directory contents
+            try {
+                log info "Listing data directory contents:"
+                ls $data_dir | print
+            } catch {|err|
+                log warning $"Could not list data directory: ($err.msg)"
+            }
+            
+            log info "✅ Backup operation completed successfully"
         } catch {|err|
             log error $"Creating backup archive failed: ($err.msg)"
             error make $err
