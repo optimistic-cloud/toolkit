@@ -86,29 +86,20 @@ backup-nu:
         }
     }
 
-    def create-backup-archive [--working-dir: path, --data-dir: path] {
+    def export-db-sqlite [--data-dir: path, --working-dir: path] {
         log info $"Creating backup archive in: ($working_dir)"
         log info $"Creating backup from data in: ($data_dir)"
         try {
-            let backup_data_archive = ($working_dir | path join "data.tar.zst") | path expand
             let backup_db_export = ($working_dir | path join "db-export.sqlite3") | path expand
 
-            log info $"backup_data_archive: ($backup_data_archive)"
             log info $"backup_db_export: ($backup_db_export)"
 
             ls $data_dir | print
 
             log info "0"
-            
-            mkdir $working_dir
-            
-            rsync -a --delete $data_dir $working_dir
             log info "1"
 
             sqlite3 ($data_dir | path join "db.sqlite3") ".backup '($backup_db_export)'"
-            log info "2"
-            tar -cf - "$working_dir" | zstd -3q --rsyncable -o "$backup_data_archive"
-            log info "3"
 
             ls $data_dir | print
             ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
@@ -127,8 +118,8 @@ backup-nu:
     }
 
     with-healthcheck $env.HC_SLUG {
-        let working_dir = "/var/lib/vaultwarden/backup"
-        create-backup-archive --working-dir $working_dir --data-dir "/vaultwarden/data"
+        let working_dir = "/tmp"
+        export-db-sqlite --data-dir "/vaultwarden/data" --working-dir $working_dir 
         #backup                --backup-dir "$working_dir"
     }
 
