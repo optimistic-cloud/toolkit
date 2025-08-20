@@ -71,13 +71,15 @@ export def --env get-vaultwarden-version [] {
 
 def generate-tags [specific: list<string> = []] {
     get-vaultwarden-version
-    
+    log info $"Vaultwarden version: ($env.VAULTWARDEN_VERSION)"
+
     let restic_version = (restic version | str trim | split row ' ' | get 1)
+    log info $"Restic version: ($restic_version)"
 
     let common_tags = [
-        $"vaultwarden_version=($env.VAULTWARDEN_VERSION)"
-        "environment=production"
-        "restic_version=($restic_version)"
+        $"vaultwarden_version:($env.VAULTWARDEN_VERSION)"
+        "environment:production"
+        "restic_version:($restic_version)"
     ]
 }
 
@@ -88,8 +90,6 @@ def backup [--paths: list<path>] {
     restic forget --keep-within 180d --prune
     restic check --read-data-subset 100%
 }
-
-
 
 def main [] {
     with-healthcheck $env.HC_SLUG {
