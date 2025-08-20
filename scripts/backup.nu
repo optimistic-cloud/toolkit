@@ -31,6 +31,7 @@ def export-db-sqlite [--database: path, --target: path] {
     log debug $"📦 Creating SQLite backup: ($target)"
 
     try {
+        if ($target | path exists) { rm $target }
         let backup_result = (^sqlite3 $database $".backup ($target)" | complete)
 
         if $backup_result.exit_code != 0 {
@@ -55,18 +56,60 @@ def export-db-sqlite [--database: path, --target: path] {
     }
 }
 
-def backup [--backup-dir: path] {
-    restic backup --host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}" --path "$backup_dir"
+def backup [--paths: list<path>]] {
+    #--host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}"
+    restic backup --path "$backup_dir"
+
+    restic backup ...($paths)
     restic forget --keep-within 180d --prune
     restic check --read-data-subset 100%
 }
 
+def create-test-restic-repo [] {
+    with-env {
+        RESTIC_REPOSITORY: "/tmp/restic-repo",
+        RESTIC_PASSWORD: "password"
+    } {
+        try {
+            log info "Creating test restic repository at /tmp/restic-repo"
+            restic init
+            log info "✅ Test restic repository created successfully"
+        } catch {|err|
+            log error $"Failed to create test restic repository: ($err.msg)"
+            error make $err
+        }
+    }
+}
+
+def list-restic-snapshots [] {
+    with-env {
+        RESTIC_REPOSITORY: "/tmp/restic-repo",
+        RESTIC_PASSWORD: "password"
+    } {
+        try {
+            log info "Creating test restic repository at /tmp/restic-repo"
+            restic snapshots
+            log info "✅ Test restic repository created successfully"
+        } catch {|err|
+            log error $"Failed to create test restic repository: ($err.msg)"
+            error make $err
+        }
+    }
+}
+
 def main [] {
+    create-test-restic-repo
+
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/tmp"
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
-        ls /vaultwarden/data/ | print
 
-        #backup                --backup-dir "$working_dir"
-    }
+        with-env {
+            RESTIC_REPOSITORY: "/tmp/restic-repo",
+            RESTIC_PASSWORD: "password"
+        } {
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
+        }
+
+    list-restic-snapshots
 }
