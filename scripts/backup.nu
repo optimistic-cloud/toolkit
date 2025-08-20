@@ -56,11 +56,11 @@ def export-db-sqlite [--database: path, --target: path] {
     }
 }
 
-def backup [--paths: list<path>] {
+def backup [--tags: list<string>, --paths: list<path>] {
     #--host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}"
     #restic backup --path "$backup_dir"
 
-    restic backup ...($paths)
+    restic backup ...($paths) --tag $tags
     restic forget --keep-within 180d --prune
     restic check --read-data-subset 100%
 }
