@@ -56,7 +56,7 @@ def export-db-sqlite [--database: path, --target: path] {
     }
 }
 
-def backup [--paths: list<path>]] {
+def backup [--paths: list<path>] {
     #--host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}"
     restic backup --path "$backup_dir"
 
@@ -111,6 +111,6 @@ def main [] {
             backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
         }
     }
-    
+
     list-restic-snapshots
 }
