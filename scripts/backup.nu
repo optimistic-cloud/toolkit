@@ -56,47 +56,6 @@ def export-db-sqlite [--database: path, --target: path] {
     }
 }
 
-def backup [--tags: list<string>, --paths: list<path>] {
-    #--host "${HOSTNAME}" --tag "${restic_tags:-vaultwarden}"
-    #restic backup --path "$backup_dir"
-
-    restic backup ...($paths) --tag $tags
-    restic forget --keep-within 180d --prune
-    restic check --read-data-subset 100%
-}
-
-def create-test-restic-repo [] {
-    with-env {
-        RESTIC_REPOSITORY: "/tmp/restic-repo",
-        RESTIC_PASSWORD: "password"
-    } {
-        try {
-            log info "Creating test restic repository at /tmp/restic-repo"
-            restic init
-            log info "✅ Test restic repository created successfully"
-        } catch {|err|
-            log error $"Failed to create test restic repository: ($err.msg)"
-            error make $err
-        }
-    }
-}
-
-def list-restic-snapshots [] {
-    with-env {
-        RESTIC_REPOSITORY: "/tmp/restic-repo",
-        RESTIC_PASSWORD: "password"
-    } {
-        try {
-            log info "Creating test restic repository at /tmp/restic-repo"
-            restic snapshots
-            log info "✅ Test restic repository created successfully"
-        } catch {|err|
-            log error $"Failed to create test restic repository: ($err.msg)"
-            error make $err
-        }
-    }
-}
-
 export def --env get-vaultwarden-version [] {
   let cfg: record = http get $"http://vaultwarden/api/config" --max-time 10sec
   let version: string = $cfg.version
@@ -110,17 +69,29 @@ export def --env get-vaultwarden-version [] {
   return $version
 }
 
-def __make-common-backup-tags [specific: list<string> = []] {
-  let common_tags = [
-    $"vaultwarden_version:($env.VAULTWARDEN_VERSION)"
-    "environment:production"
-  ]
-  ([$specific, $common_tags] | flatten) | str join " "
+def generate-tags [specific: list<string> = []] {
+    get-vaultwarden-version
+    
+    let restic_version = (restic version | str trim | split row ' ' | get 1)
+
+    let common_tags = [
+        $"vaultwarden_version=($env.VAULTWARDEN_VERSION)"
+        "environment=production"
+        "restic_version=($restic_version)"
+    ]
 }
 
-def main [] {
-    create-test-restic-repo
+def backup [--tags: list<string>, --paths: list<path>] {
+    let tags = generate-tags | flatten str join " "
 
+    restic backup ...($paths) --tag $tags
+    restic forget --keep-within 180d --prune
+    restic check --read-data-subset 100%
+}
+
+
+
+def main [] {
     with-healthcheck $env.HC_SLUG {
         let working_dir = "/tmp"
         export-db-sqlite --database "/vaultwarden/data/db.sqlite3" --target "/tmp/db-export.sqlite3"
@@ -129,12 +100,7 @@ def main [] {
             RESTIC_REPOSITORY: "/tmp/restic-repo",
             RESTIC_PASSWORD: "password"
         } {
-            get-vaultwarden-version
-            let tags = __make-common-backup-tags
-
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
         }
     }
-
-    list-restic-snapshots
 }

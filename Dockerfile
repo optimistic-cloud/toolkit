@@ -17,4 +17,8 @@ COPY vaultwarden.cron ./vaultwarden.cron
 
 COPY scripts/*.nu .
 
+ENV RESTIC_REPOSITORY="/tmp/restic-repo"
+ENV RESTIC_PASSWORD="password"
+RUN restic init
+
 CMD ["/usr/bin/supercronic", "-passthrough-logs", "-quiet", "/app/vaultwarden.cron"]
