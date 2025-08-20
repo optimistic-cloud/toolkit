@@ -92,7 +92,7 @@ def main [] {
 
         let cfg = open /config.yaml
 
-        for target in $cfg.backups {
+        $cfg.backups | par-each {|target| 
             with-env {
                 RESTIC_REPOSITORY: $target.repository,
                 RESTIC_PASSWORD: $target.password
@@ -102,5 +102,16 @@ def main [] {
                 backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
             }
         }
+
+#        for target in $cfg.backups {
+#            with-env {
+#               RESTIC_REPOSITORY: $target.repository,
+#                RESTIC_PASSWORD: $target.password
+#            } {
+#                # TODO: add , "/vaultwarden.env" as path
+#                log info $"Backuping to: ($target.name)"
+#                backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
+#            }
+#        }
     }
 }
