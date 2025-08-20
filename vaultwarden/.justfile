@@ -100,7 +100,7 @@ backup-nu:
 
             log info "0"
             which rsync
-            rsync -a --delete "$data_dir/" "$working_dir/"
+            rsync -a --delete $data_dir $working_dir
             log info "1"
 
             sqlite3 "$data_dir/db.sqlite3" ".backup '$backup_db_export'"
