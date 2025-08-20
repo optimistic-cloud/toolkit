@@ -69,24 +69,22 @@ export def --env get-vaultwarden-version [] {
   return $version
 }
 
-def generate-tags [specific: list<string> = []] {
+def generate-tags [] {
     get-vaultwarden-version
-    log info $"Vaultwarden version: ($env.VAULTWARDEN_VERSION)"
 
     let restic_version = (restic version | str trim | split row ' ' | get 1)
-    log info $"Restic version: ($restic_version)"
 
-    let common_tags = [
-        $"vaultwarden_version:($env.VAULTWARDEN_VERSION)"
-        $"restic_version:($restic_version)"
+    let tags = [
+        $"vaultwarden_version=($env.VAULTWARDEN_VERSION)"
+        $"restic_version=($restic_version)"
     ]
-    $common_tags | str join " "
+    $tags
 }
 
-def backup [--paths: list<path>] {
-    let tags = generate-tags
+def backup [--paths: list<path>, --tags: list<string>] {
+    let tag_args = ($tags | each {|t| ['--tag', $t]} | flatten)
 
-    restic backup ...($paths) --tag $tags
+    restic backup ...($paths) $tag_args
     restic forget --keep-within 180d --prune
     restic check --read-data-subset 100%
 }
@@ -99,7 +97,8 @@ def main [] {
             RESTIC_REPOSITORY: "/tmp/restic-repo",
             RESTIC_PASSWORD: "password"
         } {
-            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"]
+            let tags = generate-tags
+            backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/"] --tags $tags
         }
     }
 }
