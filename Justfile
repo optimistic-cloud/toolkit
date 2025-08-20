@@ -10,5 +10,5 @@ version:
 	@restic version
 	@ansible --version
 
-sleep:
-	sleep infinite
+backup:
+	nu backup.nu
