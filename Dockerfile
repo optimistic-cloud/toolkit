@@ -2,6 +2,7 @@
 
 FROM alpine:3
 
+# TODO: why it's there
 ARG USER_NAME="toolkit"
 ARG USER_ID="1010"
 

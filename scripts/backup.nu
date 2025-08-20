@@ -96,6 +96,7 @@ def main [] {
             let tags = generate-tags
 
             cat /vaultwarden.env | print
+            cat /config.yaml | print
 
             backup --paths ["/tmp/db-export.sqlite3", "/vaultwarden/data/", "/vaultwarden.env"] --tags $tags
         }
