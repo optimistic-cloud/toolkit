@@ -7,7 +7,8 @@ ARG USER_ID="1010"
 
 WORKDIR /app
 
-RUN apk add --no-cache just bash nushell curl sqlite restic supercronic \
+RUN chmod +x /app/*.sh \
+  && apk add --no-cache just bash nushell curl sqlite restic supercronic \
   && addgroup -g "${USER_ID}" "${USER_NAME}" \
   && adduser -u "${USER_ID}" -Ds /bin/sh -G "${USER_NAME}" "${USER_NAME}"
 
