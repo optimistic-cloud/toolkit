@@ -21,8 +21,8 @@ if [ -n "$CRON" ]; then
     # Default command if CRON_CMD not specified
     CRON_CMD="${CRON_CMD:-echo 'No CRON_CMD specified'}"
     
-    # Create a simple crontab file
-    echo "$CRON cd /app && $CRON_CMD" > /tmp/crontab
+    # Create a simple crontab file with proper shell wrapper
+    echo "$CRON /bin/sh -c 'cd /app && $CRON_CMD'" > /tmp/crontab
     
     echo "Supercronic starting with schedule: $CRON"
     echo "Command: cd /app && $CRON_CMD"
