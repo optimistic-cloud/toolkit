@@ -102,9 +102,7 @@ backup-nu:
             sqlite3 ($data_dir | path join "db.sqlite3") ".backup '($backup_db_export)'"
 
             ls $data_dir | print
-            ls $working_dir | where name != $backup_data_archive | each { |file| rm -rf $file.name }
             log info "4"
-            ls $data_dir | print
         } catch {|err|
             log error $"Creating backup archive failed: ($err.msg)"
             error make $err
