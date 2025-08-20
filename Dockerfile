@@ -25,20 +25,34 @@ if [ -n "$CRON" ]; then
     # Default command if CRON_CMD not specified
     CRON_CMD="${CRON_CMD:-echo 'No CRON_CMD specified'}"
     
-    # Create cron job with MAILTO="" to disable email completely
-    # This prevents cron from trying to send any mail
-    (echo "MAILTO=\"\""; echo "$CRON cd /app && $CRON_CMD >> /proc/1/fd/1 2>&1") | crontab -
+    # Create a generic wrapper that preserves ALL environment variables
+    cat > /usr/local/bin/cron-wrapper.sh << 'WRAPPER_EOF'
+#!/bin/sh
+# Source all environment variables that were available at container start
+if [ -f /tmp/container-env ]; then
+    set -a  # automatically export all variables
+    . /tmp/container-env
+    set +a
+fi
+cd /app
+exec $@
+WRAPPER_EOF
+    chmod +x /usr/local/bin/cron-wrapper.sh
+    
+    # Save current environment for the wrapper to use
+    env > /tmp/container-env
+    
+    # Simple cron job that uses the generic wrapper
+    (
+        echo "MAILTO=\"\""
+        echo "$CRON /usr/local/bin/cron-wrapper.sh $CRON_CMD >> /proc/1/fd/1 2>&1"
+    ) | crontab -
     
     echo "Cron installed: $CRON"
-    echo "Cron command: cd /app && $CRON_CMD"
+    echo "Cron command: $CRON_CMD"
     echo "Email disabled (MAILTO=\"\")"
     
-    # Show the actual crontab for debugging
-    echo "Current crontab:"
-    crontab -l
-    
     echo "Starting cron daemon..."
-    # Start cron daemon in foreground
     exec crond -f
 else
     # No cron, just run the command
