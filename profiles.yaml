@@ -8,34 +8,23 @@ default:
 
   backup:
     verbose: true
-    paths:
-      - "${VW_DUMP_DIR}"
-      - "${VW_DATA_DIR}"
+    source:
+      - "/vaultwarden/data/"
+      - "/var/backups/vaultwarden/"
     exclude:
       - "*.tmp"
 
-    env:
-      VW_DATA_DIR: "${VW_DATA_DIR:-/vaultwarden/data/}"
-      VW_DUMP_DIR: "${VW_DUMP_DIR:-/var/backups/vaultwarden}"
-      VW_SQLITE_DB: "${VW_SQLITE_DB:-${VW_DATA_DIR}/db.sqlite}"
-
-      HC_API: "https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
-
-    one-file-system: true
-    retry-count: 2
-    retry-delay: "60s"
-
   run-before:
-    - curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
-    - "install -d -m 700 ${VW_DUMP_DIR}"
-    - "sqlite3 ${VW_SQLITE_DB} \".backup '${VW_DUMP_DIR}/vaultwarden.sqlite'\""
+    - "curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/${HC_PING_KEY}/vaultwarden/start"
+    - "mkdir -p -m 700 /var/backups/vaultwarden"
+    - "sqlite3 /vaultwarden/data/db.sqlite3 \".backup '/var/backups/vaultwarden/vaultwarden.sqlite3'\""
 
   run-after-success:
-    - "find ${VW_DUMP_DIR} -type f -name 'vaultwarden-*.sqlite' -mtime +14 -delete"
-    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}
+    - "find /var/backups/vaultwarden -type f -name 'vaultwarden-*.sqlite' -mtime +14 -delete"
+    - "curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
 
   run-after-fail:
-    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}/fail
+    - "curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/${HC_PING_KEY}/vaultwarden/fail"
 
   retention:
     after-backup: true
