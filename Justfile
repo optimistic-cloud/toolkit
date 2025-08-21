@@ -15,3 +15,6 @@ backup:
 
 restore:
 	nu restore.nu
+
+resticprofile:
+	resticprofile backup vaultwarden-all
