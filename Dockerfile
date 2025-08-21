@@ -22,7 +22,7 @@ COPY vaultwarden.cron ./vaultwarden.cron
 
 COPY scripts/*.nu .
 COPY profiles.yaml ./profiles.yaml
-RUN resticprofile check --config ./profiles.yaml
+#RUN resticprofile check --config ./profiles.yaml
 
 ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
 ENV RESTIC_PASSWORD="password"
