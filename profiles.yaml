@@ -7,7 +7,7 @@ vars:
 
   HC_API: "https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
 
-vw-base:
+default:
   #password-file: "${VW_PASSWORD_FILE}"
 
   backup:
@@ -35,7 +35,8 @@ vw-base:
     - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}/fail
 
   retention:
-    after-backup: "forget --prune ---keep-within 180d"
+    after-backup: true
+    keep-within: 180d
 
   check:
     read-data-subset: "100%"
@@ -46,19 +47,18 @@ vw-base:
 # PRIMARY S3
 # -------------------------------
 vw-s3-primary:
-  inherits: "vw-base"
+  inherits: "default"
   repository: "/tmp/restic-repo-1"
   env:
     RESTIC_PASSWORD: "password"
 
 vw-s3-secondary:
-  inherits: "vw-base"
+  inherits: "default"
   repository: "/tmp/restic-repo-2"
   env:
     RESTIC_PASSWORD: "password"
 
 groups:
   vaultwarden-all:
-    profiles:
-      - "vw-s3-primary"
-      - "vw-s3-secondary"
+    - "vw-s3-primary"
+    - "vw-s3-secondary"

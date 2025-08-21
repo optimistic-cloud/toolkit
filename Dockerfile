@@ -23,6 +23,7 @@ COPY vaultwarden.cron ./vaultwarden.cron
 COPY scripts/*.nu .
 COPY profiles.yaml ./profiles.yaml
 #RUN resticprofile check --config ./profiles.yaml
+#RUN resticprofile backup --dry-run
 
 ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
 ENV RESTIC_PASSWORD="password"
@@ -31,5 +32,7 @@ RUN restic init
 ENV RESTIC_REPOSITORY="/tmp/restic-repo-2"
 ENV RESTIC_PASSWORD="password"
 RUN restic init
+
+ENV HC_PING_KEY=37Z18hrIp5ajAZ9iBH1lg
 
 CMD ["/usr/bin/supercronic", "-passthrough-logs", "-quiet", "/app/vaultwarden.cron"]
