@@ -11,6 +11,7 @@ vw-base:
   #password-file: "${VW_PASSWORD_FILE}"
 
   backup:
+    verbose: true
     paths:
       - "${VW_DUMP_DIR}"
       - "${VW_DATA_DIR}"
