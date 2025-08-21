@@ -13,7 +13,7 @@ vw-base:
   backup:
     paths:
       - "${VW_DUMP_DIR}"
-      - "${VW_DATA_DIR}
+      - "${VW_DATA_DIR}"
     exclude:
       - "*.tmp"
 
