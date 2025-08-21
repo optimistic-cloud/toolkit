@@ -1,0 +1,63 @@
+version: "1"
+
+vars:
+  VW_DATA_DIR: "${VW_DATA_DIR:-/vaultwarden/data/}"
+  VW_DUMP_DIR: "${VW_DUMP_DIR:-/var/backups/vaultwarden}"
+  VW_SQLITE_DB: "${VW_SQLITE_DB:-${VW_DATA_DIR}/db.sqlite}"
+
+  HC_API: "https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
+
+vw-base:
+  #password-file: "${VW_PASSWORD_FILE}"
+
+  backup:
+    paths:
+      - "${VW_DUMP_DIR}"
+      - "${VW_DATA_DIR}
+    exclude:
+      - "*.tmp"
+
+    one-file-system: true
+    retry-count: 2
+    retry-delay: "60s"
+
+  run-before:
+    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}/start
+    - "install -d -m 700 ${VW_DUMP_DIR}"
+    - "sqlite3 ${VW_SQLITE_DB} \".backup '${VW_DUMP_DIR}/vaultwarden.sqlite'\""
+
+  run-after-success:
+    - "find ${VW_DUMP_DIR} -type f -name 'vaultwarden-*.sqlite' -mtime +14 -delete"
+    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}
+
+  run-after-fail:
+    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}/fail
+
+  retention:
+    after-backup: "forget --prune ---keep-within 180d"
+
+  check:
+    read-data-subset: "100%"
+
+  #schedule: "0 15 3 * * *"
+
+# -------------------------------
+# PRIMARY S3
+# -------------------------------
+vw-s3-primary:
+  inherits: "vw-base"
+  repository: "/tmp/restic-repo-1"
+  env:
+    RESTIC_PASSWORD: "password"
+
+vw-s3-secondary:
+  inherits: "vw-base"
+  repository: "/tmp/restic-repo-2"
+  env:
+    RESTIC_PASSWORD: "password"
+
+groups:
+  vaultwarden-all:
+    profiles:
+      - "vw-s3-primary"
+      - "vw-s3-secondary"
