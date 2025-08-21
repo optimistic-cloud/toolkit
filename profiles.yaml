@@ -1,11 +1,7 @@
 version: "1"
 
 vars:
-  VW_DATA_DIR: "${VW_DATA_DIR:-/vaultwarden/data/}"
-  VW_DUMP_DIR: "${VW_DUMP_DIR:-/var/backups/vaultwarden}"
-  VW_SQLITE_DB: "${VW_SQLITE_DB:-${VW_DATA_DIR}/db.sqlite}"
 
-  HC_API: "https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
 
 default:
   #password-file: "${VW_PASSWORD_FILE}"
@@ -17,6 +13,13 @@ default:
       - "${VW_DATA_DIR}"
     exclude:
       - "*.tmp"
+
+    env:
+      VW_DATA_DIR: "${VW_DATA_DIR:-/vaultwarden/data/}"
+      VW_DUMP_DIR: "${VW_DUMP_DIR:-/var/backups/vaultwarden}"
+      VW_SQLITE_DB: "${VW_SQLITE_DB:-${VW_DATA_DIR}/db.sqlite}"
+
+      HC_API: "https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
 
     one-file-system: true
     retry-count: 2
