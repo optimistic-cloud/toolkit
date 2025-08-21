@@ -26,7 +26,7 @@ default:
     retry-delay: "60s"
 
   run-before:
-    - curl -fsS -m 10 --retry 5 -o /dev/null ${HC_API}/start
+    - curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/${HC_PING_KEY}/vaultwarden"
     - "install -d -m 700 ${VW_DUMP_DIR}"
     - "sqlite3 ${VW_SQLITE_DB} \".backup '${VW_DUMP_DIR}/vaultwarden.sqlite'\""
 
