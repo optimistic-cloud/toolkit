@@ -1,8 +1,5 @@
 version: "1"
 
-vars:
-
-
 default:
   #password-file: "${VW_PASSWORD_FILE}"
 
@@ -51,6 +48,6 @@ vw-s3-secondary:
     RESTIC_PASSWORD: "password"
 
 groups:
-  vaultwarden-all:
+  vw-all:
     - "vw-s3-primary"
     - "vw-s3-secondary"

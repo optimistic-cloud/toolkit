@@ -1,38 +1,25 @@
 # syntax=docker/dockerfile:1
-
 FROM alpine:3
 
-# TODO: why it's there
 ARG USER_NAME="toolkit"
 ARG USER_ID="1010"
-ARG RESTICPROFILE_VERSION="0.31.0"
 
 WORKDIR /app
 
-RUN apk add --no-cache just bash nushell curl sqlite restic tzdata supercronic \
+# Latest releases available at https://github.com/aptible/supercronic/releases
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.34/supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=e8631edc1775000d119b70fd40339a7238eece14 \
+    SUPERCRONIC=supercronic-linux-amd64
+
+RUN apk add --no-cache just curl sqlite restic tzdata \
   && addgroup -g "${USER_ID}" "${USER_NAME}" \
   && adduser -u "${USER_ID}" -Ds /bin/sh -G "${USER_NAME}" "${USER_NAME}" \
-  && curl -L "https://github.com/creativeprojects/resticprofile/releases/download/v${RESTICPROFILE_VERSION}/resticprofile_${RESTICPROFILE_VERSION}_linux_amd64.tar.gz" \
-     | tar -xz -C /usr/local/bin resticprofile \
-  && chmod +x /usr/local/bin/resticprofile
+  && curl -fsSLO "$SUPERCRONIC_URL" \
+  && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+  && chmod +x "$SUPERCRONIC" \
+  && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
 
-COPY Justfile ./Justfile
-COPY vaultwarden ./vaultwarden
-COPY vaultwarden.cron ./vaultwarden.cron
+USER toolkit
 
-COPY scripts/*.nu .
-COPY profiles.yaml ./profiles.yaml
-#RUN resticprofile check
-#RUN resticprofile backup --dry-run
-
-ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
-ENV RESTIC_PASSWORD="password"
-RUN restic init
-
-ENV RESTIC_REPOSITORY="/tmp/restic-repo-2"
-ENV RESTIC_PASSWORD="password"
-RUN restic init
-
-ENV HC_PING_KEY=37Z18hrIp5ajAZ9iBH1lg
-
-CMD ["/usr/bin/supercronic", "-passthrough-logs", "-quiet", "/app/vaultwarden.cron"]
+CMD ["/usr/local/bin/supercronic", "-passthrough-logs", "-quiet", "/app/crontab"]
