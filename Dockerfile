@@ -22,4 +22,12 @@ RUN apk add --no-cache just curl sqlite restic tzdata \
 
 USER toolkit
 
+ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
+ENV RESTIC_PASSWORD="password"
+RUN restic init
+
+ENV RESTIC_REPOSITORY="/tmp/restic-repo-2"
+ENV RESTIC_PASSWORD="password"
+RUN restic init
+
 CMD ["/usr/local/bin/supercronic", "-passthrough-logs", "-quiet", "/app/crontab"]
