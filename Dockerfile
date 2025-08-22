@@ -20,5 +20,5 @@ RUN find /etc/crontab -type f -not -perm 0644 -exec chmod 0644 '{}' ';'
 
 USER toolkit:root
 
-ENTRYPOINT ["/usr/bin/supercronic", "-passthrough-logs", "-quiet"]
+ENTRYPOINT ["/usr/local/bin/supercronic", "-passthrough-logs", "-quiet"]
 CMD ["/etc/crontab"]
