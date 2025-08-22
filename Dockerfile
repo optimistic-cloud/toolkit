@@ -18,6 +18,7 @@ RUN apk add --no-cache just curl sqlite restic tzdata jq \
 COPY --chown=root:root ./crontab /etc/crontab
 RUN find /etc/crontab -type f -not -perm 0644 -exec chmod 0644 '{}' ';'
 
+WORKDIR /home/toolkit
 USER toolkit:root
 
 ENTRYPOINT ["/usr/local/bin/supercronic", "-passthrough-logs", "-quiet"]
