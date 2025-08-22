@@ -20,7 +20,7 @@ RUN apk add --no-cache just curl sqlite restic tzdata \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
   && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
 
-USER toolkit
+#USER toolkit
 
 ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
 ENV RESTIC_PASSWORD="password"
