@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM alpine:3
 
-RUN userdel -rf "$(id -nu 1000)" && useradd -u 1000 -g 0 -s "$(command -v bash)" -m toolkit
+RUN addgroup -g 1000 toolkit \
+    && adduser -u 1000 -G toolkit -D -s /bin/sh toolkit
 
 # Latest releases available at https://github.com/aptible/supercronic/releases
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.34/supercronic-linux-amd64 \
