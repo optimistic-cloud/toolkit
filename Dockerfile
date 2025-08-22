@@ -1,10 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM alpine:3
 
-ARG USER_NAME="toolkit"
-ARG USER_ID="1010"
-
-WORKDIR /app
+RUN userdel -rf "$(id -nu 1000)" && useradd -u 1000 -g 0 -s "$(command -v bash)" -m toolkit
 
 # Latest releases available at https://github.com/aptible/supercronic/releases
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.34/supercronic-linux-amd64 \
@@ -20,14 +17,10 @@ RUN apk add --no-cache just curl sqlite restic tzdata jq \
   && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
   && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
 
-#USER toolkit
+COPY --chown=root:root ./crontab /etc/crontab
+RUN find /etc/crontab -type f -not -perm 0644 -exec chmod 0644 '{}' ';'
 
-ENV RESTIC_REPOSITORY="/tmp/restic-repo-1"
-ENV RESTIC_PASSWORD="password"
-RUN restic init
+USER toolkit:root
 
-ENV RESTIC_REPOSITORY="/tmp/restic-repo-2"
-ENV RESTIC_PASSWORD="password"
-RUN restic init
-
-CMD ["/usr/local/bin/supercronic", "-passthrough-logs", "-quiet", "/app/crontab"]
+ENTRYPOINT ["/usr/bin/supercronic", "-passthrough-logs", "-quiet"]
+CMD ["/etc/crontab"]
