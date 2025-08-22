@@ -11,7 +11,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
     SUPERCRONIC_SHA1SUM=e8631edc1775000d119b70fd40339a7238eece14 \
     SUPERCRONIC=supercronic-linux-amd64
 
-RUN apk add --no-cache just curl sqlite restic tzdata \
+RUN apk add --no-cache just curl sqlite restic tzdata jq \
   && addgroup -g "${USER_ID}" "${USER_NAME}" \
   && adduser -u "${USER_ID}" -Ds /bin/sh -G "${USER_NAME}" "${USER_NAME}" \
   && curl -fsSLO "$SUPERCRONIC_URL" \
