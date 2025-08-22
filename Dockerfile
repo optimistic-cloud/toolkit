@@ -1,9 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM alpine:3
 
-RUN  \
-    && adduser -u 1000 -G toolkit -D -s /bin/sh toolkit
-
 # Latest releases available at https://github.com/aptible/supercronic/releases
 ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.34/supercronic-linux-amd64 \
     SUPERCRONIC_SHA1SUM=e8631edc1775000d119b70fd40339a7238eece14 \
