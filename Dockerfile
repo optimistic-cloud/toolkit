@@ -6,7 +6,7 @@ ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.
     SUPERCRONIC_SHA1SUM=e8631edc1775000d119b70fd40339a7238eece14 \
     SUPERCRONIC=supercronic-linux-amd64
 
-RUN apk add --no-cache just curl sqlite restic tzdata jq rsync fish neovim git \
+RUN apk add --no-cache just curl sqlite restic tzdata jq rsync fish neovim git bash \
   && addgroup -g 1000 toolkit \
   && adduser -u 1000 -G toolkit -D -s /bin/sh toolkit \
   && curl -fsSLO "$SUPERCRONIC_URL" \
